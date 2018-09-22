@@ -10,8 +10,8 @@ STEPS = 640 # number of steps between whole numbers
 POINTS = 10 # modifiable by keyboard input
 
 FRAMERATE = 144
-RADIUS = 500 # modifiable by keyboard input
-BORDER = 100 # modifiable by keyboard input
+RADIUS = 400 # modifiable by keyboard input
+BORDER = 80 # modifiable by keyboard input
 FONTSIZE = 20
 
 pygame.init()
@@ -124,12 +124,12 @@ while not done:
             if event.key == pygame.K_6:
                 if extend == 0:
                     extend = 2
-                    RADIUS = 100
-                    BORDER = 500
+                    RADIUS = 80
+                    BORDER = 400
                 else:
                     extend = 0
-                    RADIUS = 500
-                    BORDER = 100    
+                    RADIUS = 400
+                    BORDER = 80   
             if event.key == pygame.K_7:
                 reverse = not reverse  
             if event.key == pygame.K_RIGHTBRACKET:
