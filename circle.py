@@ -7,43 +7,47 @@ from math import *
 # To install it run "pip3 install pygame" or "pip install pygame" from the command line
 
 STEPS = 640 # number of steps between whole numbers
-POINTS = 10 # modifiable by keyboard input
+POINTS = 10
 
 FRAMERATE = 144
-RADIUS = 400 # modifiable by keyboard input
-BORDER = 80 # modifiable by keyboard input
-FONTSIZE = 20
+RADIUS = 400 
+BORDER = 80 
+FONTSIZE = 16
+
+points = POINTS
+radius = RADIUS
+border = BORDER
 
 pygame.init()
 pygame.display.set_caption("circle.py")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("consolas", FONTSIZE)
-screen = pygame.display.set_mode((RADIUS*2 + BORDER*2, RADIUS*2 + BORDER*2 + FONTSIZE*4))
-s = pygame.Surface((RADIUS*2 + BORDER*2, RADIUS*2 + BORDER*2 + FONTSIZE*2), pygame.SRCALPHA)   # per-pixel alpha
+screen = pygame.display.set_mode((radius*2 + border*2, radius*2 + border*2 + FONTSIZE*4))
+s = pygame.Surface((radius*2 + border*2, radius*2 + border*2 + FONTSIZE*2), pygame.SRCALPHA)   # per-pixel alpha
 
 def validate(count, wrap=STEPS):
-    if count >= STEPS*POINTS:
-        return count%(STEPS*POINTS)
+    if count >= STEPS*points:
+        return count%(STEPS*points)
     if count < 0:
-        return STEPS*POINTS - wrap
+        return STEPS*points - wrap
     return count
 
 def draw_header(string_1, string_2, string_3, string_4):
     text = font.render(string_1, True, (255, 255, 255))
-    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, 0, RADIUS*2 + BORDER*2, FONTSIZE))
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, 0, radius*2 + border*2, FONTSIZE))
     screen.blit(text, (0, 0))
 
     text = font.render(string_2, True, (255, 255, 255))
-    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, FONTSIZE, RADIUS*2 + BORDER*2, FONTSIZE))
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, FONTSIZE, radius*2 + border*2, FONTSIZE))
     screen.blit(text, (0, FONTSIZE))
 
     text = font.render(string_3, True, (255, 255, 255))
-    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, RADIUS*2 + BORDER*2 + FONTSIZE*2, RADIUS*2 + BORDER*2, FONTSIZE))
-    screen.blit(text, (0, RADIUS*2 + BORDER*2 + FONTSIZE*2))
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, radius*2 + border*2 + FONTSIZE*2, radius*2 + border*2, FONTSIZE))
+    screen.blit(text, (0, radius*2 + border*2 + FONTSIZE*2))
 
     text = font.render(string_4, True, (255, 255, 255))
-    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, RADIUS*2 + BORDER*2 + FONTSIZE*3, RADIUS*2 + BORDER*2, FONTSIZE))
-    screen.blit(text, (0, RADIUS*2 + BORDER*2 + FONTSIZE*3))
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, radius*2 + border*2 + FONTSIZE*3, radius*2 + border*2, FONTSIZE))
+    screen.blit(text, (0, radius*2 + border*2 + FONTSIZE*3))
 
 def message(x, y, text):
     buffer = 5
@@ -53,9 +57,9 @@ def message(x, y, text):
     screen.blit(message, (x + buffer, y - message.get_height() - buffer))
 
 def cartesian(a):
-    radians = ((POINTS - a)/POINTS)*(2*pi)
-    x = RADIUS*cos(radians)
-    y = RADIUS*sin(radians)
+    radians = ((points - a)/points)*(2*pi)
+    x = radius*cos(radians)
+    y = radius*sin(radians)
     return x, y
 
 def connect(a, b, highlightIntegers=False, onlyIntegers=False, width=3, extend=0):
@@ -63,7 +67,7 @@ def connect(a, b, highlightIntegers=False, onlyIntegers=False, width=3, extend=0
     b_x, b_y = cartesian(b)
 
     distance = sqrt((a_x - b_x)**2 + (a_y - b_y)**2)
-    hue = (distance/(RADIUS*2.35))**2
+    hue = (distance/(radius*2.35))**2
     rgb = colorsys.hsv_to_rgb(hue, 1, 1)
     color = (rgb[0]*255, rgb[1]*255, rgb[2]*255)
 
@@ -79,11 +83,11 @@ def connect(a, b, highlightIntegers=False, onlyIntegers=False, width=3, extend=0
     d_x = b_x + (b_x - a_x)*extend
     c_y = a_y + (a_y - b_y)*extend
     d_y = b_y + (b_y - a_y)*extend
-    pygame.draw.line(screen, color, (c_x + RADIUS + BORDER, c_y + RADIUS + BORDER + FONTSIZE*2), (d_x + RADIUS + BORDER, d_y + RADIUS + BORDER + FONTSIZE*2), width)
+    pygame.draw.line(screen, color, (c_x + radius + border, c_y + radius + border + FONTSIZE*2), (d_x + radius + border, d_y + radius + border + FONTSIZE*2), width)
 
 def point(a):
     a_x, a_y = cartesian(a)
-    pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(a_x - 2 + RADIUS + BORDER, a_y - 2 + RADIUS + BORDER + FONTSIZE*2, 4, 4))
+    pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(a_x - 2 + radius + border, a_y - 2 + radius + border + FONTSIZE*2, 4, 4))
 
 wait = -1
 mod_1 = 1
@@ -110,7 +114,7 @@ while not done:
 
             if event.key == pygame.K_LSHIFT:
                 mod_1 = STEPS//8
-                mod_2 = POINTS//8
+                mod_2 = points//8
             if event.key == pygame.K_1:
                 showLabels = not showLabels
             if event.key == pygame.K_2:
@@ -124,12 +128,12 @@ while not done:
             if event.key == pygame.K_6:
                 if extend == 0:
                     extend = 2
-                    RADIUS = 80
-                    BORDER = 400
+                    radius = BORDER
+                    border = RADIUS
                 else:
                     extend = 0
-                    RADIUS = 400
-                    BORDER = 80   
+                    radius = RADIUS
+                    border = BORDER  
             if event.key == pygame.K_7:
                 reverse = not reverse  
             if event.key == pygame.K_RIGHTBRACKET:
@@ -139,11 +143,11 @@ while not done:
                 if width < 1:
                     width = 1
             if event.key == pygame.K_EQUALS:
-                POINTS = POINTS*2
+                points = points*2
             if event.key == pygame.K_MINUS:
-                POINTS = POINTS//2
-                if POINTS < 10:
-                    POINTS = 10
+                points = points//2
+                if points < 10:
+                    points = 10
             if event.key == pygame.K_SPACE:
                 if wait == -1:
                     wait = 0
@@ -174,9 +178,9 @@ while not done:
     if beautify == True:
         t = time.process_time()
         lines = []
-        for a in range(0, POINTS + 1):
+        for a in range(0, points + 1):
             if a != 0:
-                b = (a*(count/STEPS))%POINTS
+                b = (a*(count/STEPS))%points
             a_x, a_y = cartesian(a)
             b_x, b_y = cartesian(b)
             distance = sqrt((a_x - b_x)**2 + (a_y - b_y)**2)
@@ -185,29 +189,29 @@ while not done:
         for line in lines_sorted:
             connect(line[0][0], line[0][1], highlightIntegers, onlyIntegers, width, extend)  
     else:
-        for a in range(0, POINTS + 1):
+        for a in range(0, points + 1):
             if a != 0:
-                b = (a*(count/STEPS))%POINTS
+                b = (a*(count/STEPS))%points
             connect(a, b, highlightIntegers, onlyIntegers, width, extend)
             if showLabels:
                 a_x, a_y = cartesian(a)
-                message(a_x + RADIUS + BORDER, a_y + RADIUS + BORDER + FONTSIZE*2, str(a))
+                message(a_x + radius + border, a_y + radius + border + FONTSIZE*2, str(a))
 
     string_1 = "[1]Labels: {:1.1}, [2]Ints only: {:1.1}, [3]Lightning: {:1.1}, [4]Blur: {:1.1}, [5]Beautify: {:1.1} [6]Extend: {:1.1}, [7]Reverse: {:1.1}".format(str(showLabels), str(onlyIntegers), str(highlightIntegers), str(doBlur), str(beautify), str(extend > 0), str(reverse))
-    string_2 = "Multiple: {:.3f}, Points: {}, Line width: {}".format(count/STEPS, POINTS, width)
+    string_2 = "Multiple: {:.3f}, Points: {}, Line width: {}".format(count/STEPS, points, width)
     string_3 = "[Space]Pause, [Left/Right]Next/Prev Integer, [Up/Down]Next/Prev Step, [Shift]Faster Selection"
     string_4 = "[Left/Right Bracket]Line Width, [+/-]Point Count"
     draw_header(string_1, string_2, string_3, string_4)
 
-    point((count/STEPS)%POINTS)
-    point(((POINTS*count)/STEPS)%POINTS)
+    point((count/STEPS)%points)
+    point(((points*count)/STEPS)%points)
 
     if showLabels:
-        a_x, a_y = cartesian((count/STEPS)%POINTS)
-        message(a_x + RADIUS + BORDER, a_y + RADIUS + BORDER + FONTSIZE*2, "{:.3f}".format((count/STEPS)%POINTS))
+        a_x, a_y = cartesian((count/STEPS)%points)
+        message(a_x + radius + border, a_y + radius + border + FONTSIZE*2, "{:.3f}".format((count/STEPS)%points))
 
-        b_x, b_y = cartesian(((POINTS*count)/STEPS)%POINTS)
-        message(b_x + RADIUS + BORDER, b_y + RADIUS + BORDER + FONTSIZE*2, "{:.3f}".format(((POINTS*count)/STEPS)%POINTS))
+        b_x, b_y = cartesian(((points*count)/STEPS)%points)
+        message(b_x + radius + border, b_y + radius + border + FONTSIZE*2, "{:.3f}".format(((points*count)/STEPS)%points))
     
     pygame.display.flip() # update display
     clock.tick(FRAMERATE) # wait for 1/framerate seconds
