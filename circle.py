@@ -6,13 +6,19 @@ from math import *
 # This program requires the pygame module.
 # To install it run "pip3 install pygame" or "pip install pygame" from the command line
 
-STEPS = 640 # number of steps between whole numbers
+STEPS = 640 # number of steps between whole numbers (tries to do one step per frame)
 POINTS = 10
 
 FRAMERATE = 144
 RADIUS = 400 
 BORDER = 80 
 FONTSIZE = 16
+
+# 1080p
+# 400, 80, 16
+
+# 1440p
+# 500, 100, 20
 
 points = POINTS
 radius = RADIUS
