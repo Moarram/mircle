@@ -3,10 +3,11 @@ This program allows you to view multiples of integers arranged in a circle.
 
 ## Requirements
 Python 3.7
+
 Pygame module (run "pip3 install pygame" or "pip install pygame")
 
 ## Usage
-Run "circle.py"
+Run "circle.py". 
 A window should appear, all the controls are documented on the screen.
 I recommend turning on labels and stepping through whole integers with the left/right arrows to understand the concept.
 Feel free to play with all the settings and options!
