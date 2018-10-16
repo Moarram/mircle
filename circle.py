@@ -9,9 +9,9 @@ from math import *
 STEPS = 640 # number of steps between whole numbers (tries to do one step per frame)
 POINTS = 10
 
-FRAMERATE = 144
-RADIUS = 400 
-BORDER = 80 
+FRAMERATE = 60
+RADIUS = 400
+BORDER = 80
 FONTSIZE = 16
 
 # 1080p
