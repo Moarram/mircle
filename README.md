@@ -12,6 +12,11 @@ A window should appear, all the controls are documented on the screen.
 I recommend turning on labels and stepping through whole integers with the left/right arrows to understand the concept.
 Feel free to play with all the settings and options!
 
+## Screenshots
+![pic 1](https://i.gyazo.com/2718d39556a54331f0e114df5abf0b07.png)
+![pic 2](https://i.gyazo.com/783c20b8f04cc0dbf40f4b00e3c2a5be.png)
+![pic 3](https://i.gyazo.com/50db767672beecbdae6e39b84a41f6c4.png)
+
 ## Theory
 Let's start with 10 points for example, they are arranged counter-clockwise from 0 to 9.
 There is a "multiple" which we can adjust.
