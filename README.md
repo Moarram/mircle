@@ -6,6 +6,8 @@ Python 3.7
 
 Pygame module (run "pip3 install pygame" or "pip install pygame")
 
+Only tested on Windows
+
 ## Usage
 Run "circle.py". 
 A window should appear, all the controls are documented on the screen.
@@ -18,6 +20,8 @@ Feel free to play with all the settings and options!
 ![pic 3](https://i.gyazo.com/50db767672beecbdae6e39b84a41f6c4.png)
 
 ## Theory
+I got this idea from a [Mathologer video](https://youtu.be/qhbuKbxJsk8). They have a great explanation of the concept.
+
 Let's start with 10 points for example, they are arranged counter-clockwise from 0 to 9.
 There is a "multiple" which we can adjust.
 The value of each point is multiplied by this multiple, and a line is drawn from the point to the result.
