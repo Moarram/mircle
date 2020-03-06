@@ -1,0 +1,81 @@
+/* @import */
+
+code { font-family: 'Fira Code', monospace; }
+
+:root {
+    --rmin: 100vmin;
+    font-size: 16px;
+}
+* {
+    font-family: inherit;
+}
+input {
+    font-size: inherit;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-family: 'Fira Code';
+    color: #DDD;
+    background-color: #111;
+}
+#main {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    transition: flex-grow 2s;
+
+}
+#circle {
+    width: var(--rmin);
+    height: var(--rmin);
+    background-color: #000;
+}
+#menu {
+    padding: 5px;
+    min-width: 230px;
+    min-height: 100px;
+    flex: 1;
+    background-color: #222;
+}
+#action,
+#number,
+#drawer {
+    margin-bottom: 5px;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    border: 2px solid #111;
+}
+#action {
+    padding-bottom: 5px;
+}
+#action > button {
+    margin: 0 2px 5px 2px;
+    padding: 5px 10px 5px 10px;
+    font-size: inherit;
+}
+#number {
+    padding: 10px 15px 10px 15px;
+}
+input[type=number] {
+    margin: 5px 20px 5px 10px;
+    width: 70px;
+}
+#drawer {
+    margin-bottom: 0;
+    align-items: center;
+}
+input[type=checkbox] {
+    margin: 5px 20px 5px 5px;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+}
