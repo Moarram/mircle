@@ -3,8 +3,8 @@ class Circle {
     constructor() {
         this.run = false
         this.modulo = 100
-        this.multiple = 2.0
-        this.delta = 0.1 // change to multiple in 1 sec
+        this.multiple = 1.0
+        this.delta = 0.1 // delta: change to multiple per sec
     }
     init(canvas) {
         this.CANVAS = canvas

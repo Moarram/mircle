@@ -54,6 +54,7 @@ body {
 }
 #action {
     padding-bottom: 5px;
+    flex-wrap: nowrap;
 }
 #action > button {
     margin: 0 2px 5px 2px;

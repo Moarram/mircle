@@ -40,7 +40,7 @@ function buildActionMenu(parent) {
         })
     }
     wrap("Prev", () => circle.prev())
-    wrap("Start", event => {
+    wrap("Stop", event => {
         if (circle.toggle()) {
             event.target.innerText = "Stop"
             numberMenu['multiple'].disabled = true
