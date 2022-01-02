@@ -1,5 +1,19 @@
 # circle-multiples
-The website allows you to view multiples of integers arranged in a circle. Try it [here](https://moarram.github.io/circle-multiples).
 
-## Theory
-This [Mathologer video](https://youtu.be/qhbuKbxJsk8) explains the concept.
+## Project setup
+```
+npm install
+```
+
+### Compiles and hot-reloads for development
+```
+npm run serve
+```
+
+### Compiles and minifies for production
+```
+npm run build
+```
+
+### Customize configuration
+See [Configuration Reference](https://cli.vuejs.org/config/).
