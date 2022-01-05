@@ -37,6 +37,7 @@ export default class MCircle {
     
     this._lastFrame = now
     this._mult += this._delt * (ms / 1000)
+    // this._mult += this._delt * (17 / 1000)
     this._mspf = (this._mspf * (10 - 1) + ms) / 10
     this._frame += 1
 
@@ -44,10 +45,6 @@ export default class MCircle {
 
     if (this._onFrameCallback) this._onFrameCallback(this._frame)
     return window.requestAnimationFrame(this._loop.bind(this))
-  }
-
-  get fps() {
-    return Math.round(1 / (this._mspf / 1000))
   }
 
   redraw() {
@@ -62,6 +59,10 @@ export default class MCircle {
   }
   draw() {
     drawMCircle(this.ctx, this._mod, this._mult, this._opts)
+  }
+
+  get fps() {
+    return (this._run) ? Math.round(1 / (this._mspf / 1000)) : 0
   }
 
   set mod(num) {
@@ -106,33 +107,26 @@ export default class MCircle {
   }
 }
 
-function drawMCircleFast(ctx, mod, mult, opts) {
+function drawMCircleSimple(ctx, mod, mult) {
   const w = ctx.canvas.width
   const h = ctx.canvas.height
   const r = Math.min(w, h) * .45
-
-  ctx.strokeStyle = '#FFF'
-  ctx.lineWidth = opts.lineWidth || 1
   
   ctx.beginPath()
+  ctx.strokeStyle = '#FFF'
+  ctx.lineWidth = 1
   for (let i = 1; i < mod + 1; i++) {
     const a1 = (i / mod) * Math.PI * 2
     const a2 = (a1 * mult) % (Math.PI * 2)
     ctx.moveTo(Math.cos(a1) * r + w / 2, Math.sin(a1) * r + h / 2)
     ctx.lineTo(Math.cos(a2) * r + w / 2, Math.sin(a2) * r + h / 2)
-
-    // const s1 = U.math.cart(a1, r)
-    // const s2 = U.math.cart(a2, r)
-    // const pos1 = { x: s1.x + w / 2, y: s1.y + h / 2 }
-    // const pos2 = { x: s2.x + w / 2, y: s2.y + h / 2 }
-    // U.draw.line(ctx, pos1, pos2, { color: '#FFF', width: opts.lineWidth||1 })
   }
   ctx.stroke()
   ctx.closePath()
 }
 
 export function drawMCircle(ctx, mod, mult, opts) {
-  // return drawMCircleFast(ctx, mod, mult, opts)
+  // return drawMCircleSimple(ctx, mod, mult)
 
   // opts:
   //  lineWidth (num (0,inf)): width of lines

@@ -16,6 +16,7 @@ export default {
   },
   emits: [
     'update:mult',
+    'update:fps',
   ],
   data() {
     return {
@@ -50,9 +51,13 @@ export default {
     
     this.circle = new MCircle(ctx, this.mod, this.mult, this.delta, this.opts)
     this.circle.draw()
-    this.circle.onFrame(frame => {
-      if (frame % 3 === 0) this.$emit('update:mult', this.circle.mult)
-    })
+
+    window.setInterval(() => {
+      if (this.run) {
+        this.$emit('update:fps', this.circle.fps)
+      }
+    }, 1000)
+
     if (this.run) this.circle.start()
   },
   computed: {
