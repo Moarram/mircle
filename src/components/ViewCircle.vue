@@ -4,9 +4,16 @@
       :mod="params.mod"
       :mult="params.mult"
       :opts="opts"
+      style="position: absolute; top: 0"
     />
     <TheControls
-
+      :mod="params.mod"
+      :mult="params.mult"
+      :delta="params.delta"
+      :opts="opts"
+      :run="run"
+      :fps="frame.fps"
+      style="position: absolute; top: 0"
     />
   </div>
 </template>
@@ -24,7 +31,7 @@ export default {
   data() {
     return {
       params: {
-        mod: 300,
+        mod: 200,
         mult: 2,
         delta: .001,
       },
@@ -35,6 +42,7 @@ export default {
         colorMode: 'short',
         alphaMode: null,
         trails: 0,
+        ratio: window.devicePixelRatio || 1,
         zoom: 1,
       },
       choices: {
@@ -46,12 +54,14 @@ export default {
         colorMode: ['short', 'long', 'fast', 'slow', null],
         alphaMode: [null, 'short', 'long', 'fast', 'slow'],
         trails: [0, .3, .6, .8, .9, 1],
+        ratio: [.1, .25, .5, 1, 2, 3, 4],
         zoom: [1, 2, 5, 10],
       },
       frame: {
         count: 0,
         last: null,
-        mspf: null,
+        mspf: 100,
+        fps: 0,
       },
       run: false,
     }
@@ -60,6 +70,10 @@ export default {
     this.start()
 
     window.addEventListener('keydown', this.handleKeydown)
+
+    window.setInterval(() => {
+      this.frame.fps = (this.run) ? Math.round(1 / (this.frame.mspf / 1000)) : 0
+    }, 250)
   },
   computed: {
 
@@ -70,8 +84,7 @@ export default {
       this.run = true
 
       this.frame.count = 0
-      this.frame.last = Date.now()
-      this.frame.mspf = 0
+      this.frame.last = Date.now() - this.frame.mspf
 
       this.loop()
     },
@@ -84,7 +97,7 @@ export default {
       const now = Date.now()
       const ms = now - this.frame.last
       this.frame.last = now
-      this.frame.mspf = (this.frame.mspf * (10 - 1) + ms) / 10
+      this.frame.mspf = (this.frame.mspf * (5 - 1) + ms) / 5
       this.frame.count += 1
 
       this.step()
@@ -92,6 +105,25 @@ export default {
     },
     step() {
       this.params.mult += this.params.delta
+    },
+    handleKeydown(key) {
+      switch (key.key) {
+        case ' ': (this.run) ? this.stop() : this.start(); break
+        case 'r': this.params.delta = -this.params.delta; break
+        case ']': this.params.mod = this.seek(this.params.mod, this.choices.mod, '+'); break
+        case '[': this.params.mod = this.seek(this.params.mod, this.choices.mod, '-'); break
+        case 'd': this.opts.drawOrder = this.seek(this.opts.drawOrder, this.choices.drawOrder); break
+        case 'c': this.opts.colorMode = this.seek(this.opts.colorMode, this.choices.colorMode); break
+        case 'a': this.opts.alphaMode = this.seek(this.opts.alphaMode, this.choices.alphaMode); break
+        case 'z': this.opts.zoom = this.seek(this.opts.zoom, this.choices.zoom, '+', true); break
+        case 'l': this.opts.lineWidth = this.seek(this.opts.lineWidth, this.choices.lineWidth, '+', true); break
+        case '=': this.opts.ratio = this.seek(this.opts.ratio, this.choices.ratio, '+'); break
+        case '-': this.opts.ratio = this.seek(this.opts.ratio, this.choices.ratio, '-'); break
+        case 'ArrowUp': this.params.delta = this.seek(this.params.delta, this.choices.delta, '+'); break
+        case 'ArrowDown': this.params.delta = this.seek(this.params.delta, this.choices.delta, '-'); break
+        case 'ArrowLeft': this.params.mult = Math.ceil(this.params.mult) - ((this.run && Math.sign(this.params.delta) > 0) ? 2 : 1); break
+        case 'ArrowRight': this.params.mult = Math.floor(this.params.mult) + ((this.run && Math.sign(this.params.delta) < 0) ? 2 : 1); break
+      }
     },
     seek(val, choices, mode='+', wrap=false) {
       if (typeof val !== 'number') {
@@ -116,23 +148,6 @@ export default {
       }
       return val
     },
-    handleKeydown(key) {
-      switch (key.key) {
-        case ' ': (this.run) ? this.stop() : this.start(); break
-        case 'r': this.params.delta = -this.params.delta; break
-        case ']': this.params.mod = this.seek(this.params.mod, this.choices.mod, '+'); break
-        case '[': this.params.mod = this.seek(this.params.mod, this.choices.mod, '-'); break
-        case 'd': this.opts.drawOrder = this.seek(this.opts.drawOrder, this.choices.drawOrder); break
-        case 'c': this.opts.colorMode = this.seek(this.opts.colorMode, this.choices.colorMode); break
-        case 'a': this.opts.alphaMode = this.seek(this.opts.alphaMode, this.choices.alphaMode); break
-        case 'z': this.opts.zoom = this.seek(this.opts.zoom, this.choices.zoom, '+', true); break
-        case 'l': this.opts.lineWidth = this.seek(this.opts.lineWidth, this.choices.lineWidth, '+', true); break
-        case 'ArrowUp': this.params.delta = this.seek(this.params.delta, this.choices.delta, '+'); break
-        case 'ArrowDown': this.params.delta = this.seek(this.params.delta, this.choices.delta, '-'); break
-        case 'ArrowLeft': this.params.mult = Math.ceil(this.params.mult) - 1; break
-        case 'ArrowRight': this.params.mult = Math.floor(this.params.mult) + 1; break
-      }
-    },
   }
 }
 </script>
@@ -140,6 +155,7 @@ export default {
 <style lang="scss">
 #view-circle {
   width: 100%;
-  height: 95vh;
+  height: calc(100vh - 1px);
+  position: relative;
 }
 </style>

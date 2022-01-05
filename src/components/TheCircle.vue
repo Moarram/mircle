@@ -14,6 +14,7 @@ export default {
   },
   data() {
     return {
+      canvas: null,
       circle: null,
     }
   },
@@ -21,29 +22,36 @@ export default {
     mod(val) { this.circle.mod = val },
     mult(val) { this.circle.mult = val },
     opts: {
-      handler(val) { this.circle.opts = val },
+      handler(val) {
+        this.circle.opts = val
+        this.resize()
+      },
       deep: true,
     },
   },
   mounted() {
-    const canvas = document.getElementById('main-canvas')
-    const ctx = canvas.getContext('2d', { alpha: false })
+    this.canvas = document.getElementById('main-canvas')
+    const ctx = this.canvas.getContext('2d', { alpha: false })
     
-    const resize = () => {
-      canvas.width = canvas.clientWidth * this.ratio
-      canvas.height = canvas.clientHeight * this.ratio
-    }
-    window.addEventListener('resize', resize)
-    resize()
+    window.addEventListener('resize', () => this.resize())
+    // window.setInterval(() => this.resize(), 1000) // doesn't work?
+    this.resize()
     
     this.circle = new MCircle(ctx, this.mod, this.mult, undefined, this.opts)
     this.circle.draw()
   },
   computed: {
     ratio() {
-      return window.devicePixelRatio || 1
+      return this.opts.ratio || window.devicePixelRatio || 1
     },
   },
+  methods: {
+    resize() {
+      this.canvas.width = this.canvas.clientWidth * this.ratio
+      this.canvas.height = this.canvas.clientHeight * this.ratio
+      if (this.circle) this.circle.redraw()
+    }
+  }
 }
 </script>
 

@@ -165,8 +165,7 @@ export function drawMCircle(ctx, mod, mult, opts) {
   }
 
   ctx.save()
-  ctx.lineWidth = opts.lineWidth || 1
-
+  ctx.lineWidth = (opts.lineWidth) ? (opts.ratio) ? opts.lineWidth * opts.ratio : opts.lineWidth : 1
   for (let l of lines) {
     let hue = null
     switch (opts.colorMode) {
@@ -187,19 +186,13 @@ export function drawMCircle(ctx, mod, mult, opts) {
       case 'fast': alpha *= (l.i / (mod * 1.2)) ** 1.5; break
       case 'slow': alpha *= ((mod - l.i) / (mod * 1.2)) ** 1.5; break
     }
-    // let colorRGBA = U.color.str_rgba({ ...colorRGB, a: alpha })
 
     ctx.beginPath()
     ctx.strokeStyle = (alpha === 1) ? `rgb(${rgb.r},${rgb.g},${rgb.b})` : `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`
     ctx.moveTo(l.pos1.x, l.pos1.y)
     ctx.lineTo(l.pos2.x, l.pos2.y)
     ctx.stroke()
-    
-    // U.draw.line(ctx, l.pos1, l.pos2, { color: colorRGBA, width: opts.lineWidth||1 })
-
   }
-
-  ctx.closePath()
   ctx.restore()
 
   if (opts.doLabels) text({ x: 10, y: 20 }, `${Math.round(mult * 1000) / 1000} / ${mod}`)
