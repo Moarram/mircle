@@ -12,12 +12,6 @@ export default class MCircle {
     this._run = false
     this._frame = 0
     this._mspf = 16
-
-    this._onFrameCallback = null
-  }
-
-  onFrame(func=null) {
-    this._onFrameCallback = func
   }
 
   start() {
@@ -42,14 +36,12 @@ export default class MCircle {
     this._frame += 1
 
     this.redraw()
-
-    if (this._onFrameCallback) this._onFrameCallback(this._frame)
     return window.requestAnimationFrame(this._loop.bind(this))
   }
 
   redraw() {
-    if (this._opts.trail > 0) {
-      this.ctx.fillStyle = `rgba(0, 0, 0, ${(1 - this._opts.trail) ** 2}`
+    if (this._opts.trails > 0) {
+      this.ctx.fillStyle = `rgba(0, 0, 0, ${(1 - this._opts.trails) ** 2}`
       this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height) // fade canvas
     } else {
       this.ctx.fillStyle = '#000'
@@ -107,14 +99,14 @@ export default class MCircle {
   }
 }
 
-function drawMCircleSimple(ctx, mod, mult) {
+function drawMCircleSimple(ctx, mod, mult, color='#FFF', width=1) {
   const w = ctx.canvas.width
   const h = ctx.canvas.height
   const r = Math.min(w, h) * .45
   
   ctx.beginPath()
-  ctx.strokeStyle = '#FFF'
-  ctx.lineWidth = 1
+  ctx.strokeStyle = color
+  ctx.lineWidth = width
   for (let i = 1; i < mod + 1; i++) {
     const a1 = (i / mod) * Math.PI * 2
     const a2 = (a1 * mult) % (Math.PI * 2)
@@ -129,6 +121,7 @@ export function drawMCircle(ctx, mod, mult, opts) {
   // return drawMCircleSimple(ctx, mod, mult)
 
   // opts:
+  //  zoom (num (0,inf)): zoom factor (1 is normal)
   //  lineWidth (num (0,inf)): width of lines
   //  lineAlpha (num (0,1]): base transparency of lines (1 is solid)
   //  drawOrder (str): which lines are drawn on top
@@ -151,7 +144,7 @@ export function drawMCircle(ctx, mod, mult, opts) {
   const h = ctx.canvas.height
 
   const lines = []
-  const r = Math.min(w, h) * .45
+  const r = Math.min(w, h) * .45 * opts.zoom
   
   for (let i = 1; i < mod + 1; i++) {
     const a1 = (i / mod) * Math.PI * 2
