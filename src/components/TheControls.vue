@@ -1,104 +1,203 @@
 <template>
-	<div id="controls">
-		<div id="draw-controls">
-			<div>[L] line width: <span class="right val">{{ opts.lineWidth }}</span></div>
-			<div>... opacity: <span class="right val">{{ opts.lineAlpha }}</span></div>
-			<div>[D] draw order: <span class="right val">{{ opts.drawOrder }}</span></div>
-			<div>[C] color mode: <span class="right val">{{ opts.colorMode || 'plain' }}</span></div>
-			<div>[A] opacity mode: <span class="right val">{{ opts.alphaMode || 'full' }}</span></div>
-			<div>... blurring: <span class="right val">{{ opts.trails }}</span></div>
-			<div>[=/-] resolution: <span class="right val">{{ opts.ratio }}x</span></div>
-			<div>[Z] zoom: <span class="right val">{{ opts.zoom }}x</span></div>
-		</div>
-		<div id="animation-controls">
-			<div>[Space] animating: <span class="val">{{ run }}</span></div>
-			<div>[↑/↓] delta: <span class="val">{{ delta }}</span></div>
-			<div>[R] reverse</div>
-		</div>
-		<div id="fps"><span class="val">{{ fps }}</span>&nbsp;FPS</div>
-		<div id="data-controls">
-			<div>[[/]] # of lines: <span class="right val">{{ mod }}</span></div>
-			<div>[←/→] multiple: <span class="right val">{{ multRounded }}</span></div>
-		</div>
-	</div>
+  <div id="controls">
+    <div v-if="show.menu" id="menu">
+      <div>[<span class="kb">M</span>] Menu <span style="color: #FFF8">(use keyboard)</span></div>
+      <!-- <BaseButton
+        color-group="math"
+        @click="show.mathOpts = !show.mathOpts"
+      >
+        Arrangement
+      </BaseButton>
+      <BaseButton
+        color-group="anim"
+        @click="show.animateOpts = !show.animateOpts"
+      >
+        Animation
+      </BaseButton>
+      <BaseButton
+        color-group="disp"
+        @click="show.displayOpts = !show.displayOpts"
+      >
+        Appearance
+      </BaseButton> -->
+      <div id="fps"><span class="val">{{ fps }}</span>&nbsp;FPS</div>
+    </div>
+    <div v-if="show.opts && show.mathOpts" id="data-controls">
+      <div>[<span class="kb">[</span>/<span class="kb">]</span>] # of lines:&nbsp;<span class="right val">{{ mod }}</span></div>
+      <div>[<span class="kb">←</span>/<span class="kb">→</span>] multiple:&nbsp;<span class="right val">{{ multRounded }}</span></div>
+    </div>
+    <div v-if="show.opts && show.animateOpts" id="anim-controls">
+      <div>[<span class="kb">Space</span>] animating:&nbsp;<span class="right val">{{ run }}</span></div>
+      <div>[<span class="kb">↑</span>/<span class="kb">↓</span>] delta:&nbsp;<span class="right val">{{ delta }}</span></div>
+      <div>[<span class="kb">R</span>] reverse</div>
+    </div>
+    <div v-if="show.opts && show.displayOpts" id="disp-controls">
+      <div>[<span class="kb">L</span>] line width:&nbsp;<span class="right val">{{ opts.lineWidth }}</span></div>
+      <div>... opacity:&nbsp;<span class="right val">{{ opts.lineAlpha }}</span></div>
+      <div>[<span class="kb">D</span>] draw order:&nbsp;<span class="right val">{{ opts.drawOrder }}</span></div>
+      <div>[<span class="kb">C</span>] color mode:&nbsp;<span class="right val">{{ opts.colorMode || 'none' }}</span></div>
+      <div>[<span class="kb">A</span>] opacity mode:&nbsp;<span class="right val">{{ opts.alphaMode || 'none' }}</span></div>
+      <div>... blurring:&nbsp;<span class="right val">{{ opts.trails }}</span></div>
+      <div>[<span class="kb">=</span>/<span class="kb">-</span>] resolution:&nbsp;<span class="right val">{{ opts.ratio }}x</span></div>
+      <div>[<span class="kb">Z</span>] zoom:&nbsp;<span class="right val">{{ opts.zoom }}x</span></div>
+    </div>
+  </div>
 </template>
 
 <script>
 import * as U from '@/modules/utils.js'
 
-export default {
-	name: 'TheControls',
-	props: {
-		mod: Number,
-		mult: Number,
-		delta: Number,
-		opts: Object,
-		run: Boolean,
-		fps: Number,
-	},
-	data() {
-		return {
+import BaseButton from '@/components/BaseButton.vue'
 
-		}
-	},
-	computed: {
-		multRounded() {
-			return U.math.round(this.mult, 4)
-		}
-	},
+export default {
+  name: 'TheControls',
+  components: {
+    BaseButton,
+  },
+  props: {
+    mod: Number,
+    mult: Number,
+    delta: Number,
+    opts: Object,
+    run: Boolean,
+    fps: Number,
+  },
+  emits: [
+    'update:mod',
+    'update:mult',
+    'update:delta',
+    'update:opts', 
+    'update:run',
+  ],
+  data() {
+    return {
+      show: {
+        menu: true,
+        opts: false,
+        mathOpts: true,
+        animateOpts: true,
+        displayOpts: true,
+      },
+      choices: {
+        mod: [10, 50, 100, 200, 400, 800, 1600, 3200, 6400],
+        delta: [-1, -.4, -.2, -.1, -.04, -.02, -.01, -.004, -.002, -.001, .001, .002, .004, .01, .02, .04, .1, .2, .4, 1],
+        lineWidth: [.5, 1, 2, 3, 5],
+        lineAlpha: [.1, .2, .3, .4, .5, .6, .7, .8, .9, 1],
+        drawOrder: ['short', 'long', 'fast', 'slow'],
+        colorMode: ['short', 'long', 'fast', 'slow', null],
+        alphaMode: [null, 'short', 'long', 'fast', 'slow'],
+        trails: [0, .3, .7, .9, 1],
+        ratio: [.1, .25, .5, 1, 2, 3, 4],
+        zoom: [1, 2, 5, 10],
+      },
+    }
+  },
+  mounted() {
+    window.addEventListener('keydown', this.handleKeydown)
+  },
+  computed: {
+    multRounded() {
+      const num = U.math.round(this.mult, 4)
+      const [int, dec] = num.toString().split('.')
+      return `${int}.${dec ? dec.padEnd(4, '0') : '0000'}`
+    }
+  },
+  methods: {
+    handleKeydown(key) {
+      const nextOpt = (key, mode, wrap) => {
+        this.$emit('update:opts', { ...this.opts, [key]: this.seek(this.opts[key], this.choices[key], mode, wrap) })
+      }
+      switch (key.key) {
+        case 'm': this.show.opts = !this.show.opts; break
+        case ' ': this.$emit('update:run', !this.run); break
+        case 'r': this.$emit('update:delta', -this.delta); break
+        case ']': this.$emit('update:mod', this.seek(this.mod, this.choices.mod, '+')); break
+        case '[': this.$emit('update:mod', this.seek(this.mod, this.choices.mod, '-')); break
+        case 'd': nextOpt('drawOrder'); break
+        case 'c': nextOpt('colorMode'); break
+        case 'a': nextOpt('alphaMode'); break
+        case 'z': nextOpt('zoom', '+', true); break
+        case 'l': nextOpt('lineWidth', '+', true); break
+        case '=': nextOpt('ratio', '+'); break
+        case '-': nextOpt('ratio', '-'); break
+        case 'ArrowUp': this.$emit('update:delta', this.seek(this.delta, this.choices.delta, '+')); break
+        case 'ArrowDown': this.$emit('update:delta', this.seek(this.delta, this.choices.delta, '-')); break
+        case 'ArrowLeft': this.$emit('update:mult', Math.ceil(this.mult) - ((this.run && Math.sign(this.delta) > 0) ? 2 : 1)); break
+        case 'ArrowRight': this.$emit('update:mult', Math.floor(this.mult) + ((this.run && Math.sign(this.delta) < 0) ? 2 : 1)); break
+      }
+    },
+    seek(val, choices, mode='+', wrap=false) {
+      if (typeof val !== 'number') {
+        const index = choices.indexOf(val)
+        if (index === -1) return choices[0]
+        if (mode === '+') return choices[(index + 1) % choices.length]
+        if (mode === '-') return choices[(index - 1) % choices.length]
+      } else {
+        if (mode === '+') {
+          for (let choice of choices) {
+            if (val < choice) return choice
+          }
+          if (wrap) return choices[0]
+        }
+        if (mode === '-') {
+          const reversed = [...choices].reverse()
+          for (let choice of reversed) {
+            if (val > choice) return choice
+          }
+          if (wrap) return reversed[0]
+        }
+      }
+      return val
+    },
+  }
 }
 </script>
 
 <style lang="scss">
-$edge: 5px;
-$bump: 10px;
-
 #controls {
-	width: calc(100% - $edge * 2);
-	padding: $edge;
-	display: flex;
-	flex-flow: row nowrap;
-	align-items: flex-start;
-	justify-content: space-around;
-
-	> * {
-		padding: 7px 10px 10px 10px;
-		border-radius: 3px;
-		background: #111A;
-	}
+  width: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: flex-start;
+  justify-content: space-around;
 }
-#animation-controls {
-	margin-right: 0 $edge;
-	padding-left: $bump;
-	flex-grow: 1;
-	display: flex;
-	flex-flow: row wrap;
-	justify-content: space-between;
+#menu {
+  width: 100%;
+  display: flex;
+  flex-flow: row;
+  justify-content: space-between;
+  background: #000C;
 
-	> div:not(:last-child) {
-		margin-right: 10px;
-	}
+  > * {
+    margin: .5rem;
+  }
 }
+
+#anim-controls,
 #data-controls,
-#draw-controls {
-	min-width: 20vw;
-	display: flex;
-	flex-flow: column;
+#disp-controls {
+  min-width: 20vw;
+  padding: .5rem;
+  display: flex;
+  flex-flow: column;
+  border-top: 1px solid #FFF4;
+  background: #000C;
 }
-#draw-controls {
-	margin-right: $edge;
-}
-#fps {
-	margin: 0 $edge;
-}
+
+
 .right {
-	float: right;
+  float: right;
 }
 .val {
-	color: #DB5;
+  font-weight: bold;
+  color: #DB5;
+}
+.kb {
+  font-weight: bold;
+  color: #5BD;
 }
 .row {
-	display: flex;
-	flex-flow: row wrap;
+  display: flex;
+  flex-flow: row wrap;
 }
 </style>
