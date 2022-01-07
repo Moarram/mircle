@@ -43,8 +43,8 @@ export default class MCircle {
     this.ctx.fillStyle = '#000'
     this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height) // clear canvas
   }
-  redraw() {
-    if (this._opts.trails > 0) {
+  redraw({ clear=false }={}) {
+    if (!clear && this._opts.trails > 0) {
       this.ctx.fillStyle = `rgba(0, 0, 0, ${(1 - this._opts.trails) ** 2}`
       this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height) // fade canvas
     } else {
@@ -86,8 +86,7 @@ export default class MCircle {
 
   set opts(obj) {
     for (let key in obj) this._opts[key] = obj[key]
-    this.clear()
-    if (this.autodraw) this.redraw()
+    if (this.autodraw) this.redraw({ clear: true })
   }
   get opts() {
     const ret = {}
@@ -192,7 +191,7 @@ export function drawMCircle(ctx, mod, mult, opts) {
       case 'slow': alpha *= ((mod - l.i) / (mod * 1.2)) ** 1.5; break
     }
 
-    let color = '#FFF'
+    let color = (alpha === 1 ) ? '#FFF' : `rgba(255,255,255,${alpha}`
     const half = Math.floor(mod / 2)
     
     if (opts.info) {

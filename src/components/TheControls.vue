@@ -190,7 +190,7 @@ export default {
 
   &.hide {
     opacity: 0;
-    transition: 3s opacity;
+    transition: 3s ease-in opacity;
   }
 }
 
