@@ -10,6 +10,11 @@ export const math = {
     const d = Math.pow(10, decimals) // digits after decimal
     return Math.round(number * d) / d
   },
+  pad(number, zeroes=1) {
+    const num = this.round(number, zeroes)
+    const [int, dec=''] = num.toString().split('.')
+    return `${int}.${dec.padEnd(zeroes, '0')}`
+  }
 }
 
 // draw

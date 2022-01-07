@@ -166,6 +166,8 @@ export function drawMCircle(ctx, mod, mult, opts) {
 
   ctx.save()
   ctx.lineWidth = (opts.lineWidth) ? (opts.ratio) ? opts.lineWidth * opts.ratio : opts.lineWidth : 1
+  ctx.textAlign = 'center'
+
   for (let l of lines) {
     let hue = null
     switch (opts.colorMode) {
@@ -177,8 +179,7 @@ export function drawMCircle(ctx, mod, mult, opts) {
       case 'slow': hue = l.i / mod; break
       default: hue = null
     }
-    let rgb = (hue === null) ? { r: 255, g: 255, b: 255 } : U.color.hsv_to_rgb({ h: hue, s: 1, v: 1 })
-    
+
     let alpha = opts.lineAlpha || 1
     switch (opts.alphaMode) {
       case 'short': alpha *= 1 - l.dist / (r * 2); break
@@ -187,11 +188,47 @@ export function drawMCircle(ctx, mod, mult, opts) {
       case 'slow': alpha *= ((mod - l.i) / (mod * 1.2)) ** 1.5; break
     }
 
+    let color = '#FFF'
+    const half = Math.floor(mod / 2)
+    
+    if (opts.info) {
+      color = '#FFF5'
+      if (l.i === 1 || l.i === half || l.i === mod) {
+        let val = 0
+        if (l.i === 1) {
+          color = 'rgb(0,127,255)'
+          val = U.math.pad(mult % mod, 2)
+        }
+        if (l.i === half) {
+          color = 'rgb(255,127,0)'
+          val = U.math.pad((half * mult) % mod, 2)
+        }
+        if (l.i === mod) {
+          color = 'rgb(255,0,127)'
+          val = U.math.pad((mod * mult) % mod, 2)
+        }
+        U.draw.text(ctx, {
+          x: l.pos2.x + (l.pos2.x - w / 2) * .1,
+          y: l.pos2.y - 8 * opts.ratio + (l.pos2.y - h / 2) * .1,
+        }, val, { color, size: 12 * opts.ratio })
+        ctx.lineWidth *= 3
+      }
+      U.draw.text(ctx, {
+        x: l.pos1.x + (l.pos1.x - w / 2) * .05,
+        y: l.pos1.y - 8 * opts.ratio + (l.pos1.y - h / 2) * .05,
+      }, l.i, { color, size: 12 * opts.ratio })
+    } else if (hue !== null) {
+      const rgb = U.color.hsv_to_rgb({ h: hue, s: 1, v: 1 })
+      color = (alpha === 1) ? `rgb(${rgb.r},${rgb.g},${rgb.b})` : `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`
+    }
+
     ctx.beginPath()
-    ctx.strokeStyle = (alpha === 1) ? `rgb(${rgb.r},${rgb.g},${rgb.b})` : `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`
+    ctx.strokeStyle = color
     ctx.moveTo(l.pos1.x, l.pos1.y)
     ctx.lineTo(l.pos2.x, l.pos2.y)
     ctx.stroke()
+
+    if (opts.info && (l.i === 1 || l.i === half || l.i === mod)) ctx.lineWidth /= 3
   }
   ctx.restore()
 
