@@ -1,6 +1,6 @@
 <template>
   <div id="controls">
-    <div v-if="show.menu" id="menu">
+    <div id="menu" :class="{ hide: !show.menu && !show.opts }">
       <div>[<span class="kb">M</span>] Menu <span style="color: #FFF8">(use keyboard)</span></div>
       <!-- <BaseButton
         color-group="math"
@@ -23,23 +23,24 @@
       <div id="fps"><span class="val">{{ fps }}</span>&nbsp;FPS</div>
     </div>
     <div v-if="show.opts && show.mathOpts" id="data-controls">
-      <div>[<span class="kb">[</span>/<span class="kb">]</span>] # of lines:&nbsp;<span class="right val">{{ mod }}</span></div>
-      <div>[<span class="kb">←</span>/<span class="kb">→</span>] multiple:&nbsp;<span class="right val">{{ multRounded }}</span></div>
+      <BaseParam key1="[" key2="]" text="# of lines" :val="mod"/>
+      <BaseParam key1="←" key2="→" text="multiple" :val="multRounded"/>
     </div>
     <div v-if="show.opts && show.animateOpts" id="anim-controls">
-      <div>[<span class="kb">Space</span>] animating:&nbsp;<span class="right val">{{ run }}</span></div>
-      <div>[<span class="kb">↑</span>/<span class="kb">↓</span>] delta:&nbsp;<span class="right val">{{ delta }}</span></div>
-      <div>[<span class="kb">R</span>] reverse</div>
+      <BaseParam key1="Space" text="animating" :val="run"/>
+      <BaseParam key1="↑" key2="↓" text="delta" :val="delta"/>
+      <BaseParam key1="R" text="reverse"/>
     </div>
     <div v-if="show.opts && show.displayOpts" id="disp-controls">
-      <div>[<span class="kb">L</span>] line width:&nbsp;<span class="right val">{{ opts.lineWidth }}</span></div>
-      <div>... opacity:&nbsp;<span class="right val">{{ opts.lineAlpha }}</span></div>
-      <div>[<span class="kb">D</span>] draw order:&nbsp;<span class="right val">{{ opts.drawOrder }}</span></div>
-      <div>[<span class="kb">C</span>] color mode:&nbsp;<span class="right val">{{ opts.colorMode || 'none' }}</span></div>
-      <div>[<span class="kb">A</span>] opacity mode:&nbsp;<span class="right val">{{ opts.alphaMode || 'none' }}</span></div>
-      <div>... blurring:&nbsp;<span class="right val">{{ opts.trails }}</span></div>
-      <div>[<span class="kb">=</span>/<span class="kb">-</span>] resolution:&nbsp;<span class="right val">{{ opts.ratio }}x</span></div>
-      <div>[<span class="kb">Z</span>] zoom:&nbsp;<span class="right val">{{ opts.zoom }}x</span></div>
+      <BaseParam key1="L" text="line width" :val="opts.lineWidth"/>
+      <BaseParam key1="O" text="opacity" :val="opts.lineAlpha"/>
+      <BaseParam key1="D" text="draw order" :val="opts.drawOrder"/>
+      <BaseParam key1="C" text="color mode" :val="opts.colorMode || 'none'"/>
+      <BaseParam key1="A" text="opacity mode" :val="opts.alphaMode || 'none'"/>
+      <BaseParam key1="B" text="blurring" :val="opts.trails"/>
+      <BaseParam key1="=" key2="-" text="resolution" :val="`${opts.ratio}x`"/>
+      <BaseParam key1="Z" text="zoom" :val="`${opts.zoom}x`"/>
+      <BaseParam key1="I" text="show info" :val="opts.info"/>
     </div>
   </div>
 </template>
@@ -48,11 +49,13 @@
 import * as U from '@/modules/utils.js'
 
 import BaseButton from '@/components/BaseButton.vue'
+import BaseParam from '@/components/BaseParam.vue'
 
 export default {
   name: 'TheControls',
   components: {
     BaseButton,
+    BaseParam,
   },
   props: {
     mod: Number,
@@ -79,10 +82,10 @@ export default {
         displayOpts: true,
       },
       choices: {
-        mod: [10, 50, 100, 200, 400, 800, 1600, 3200, 6400],
+        mod: [10, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800],
         delta: [-1, -.4, -.2, -.1, -.04, -.02, -.01, -.004, -.002, -.001, .001, .002, .004, .01, .02, .04, .1, .2, .4, 1],
         lineWidth: [.5, 1, 2, 3, 5],
-        lineAlpha: [.1, .2, .3, .4, .5, .6, .7, .8, .9, 1],
+        lineAlpha: [.1, .3, .7, 1],
         drawOrder: ['short', 'long', 'fast', 'slow'],
         colorMode: ['short', 'long', 'fast', 'slow', null],
         alphaMode: [null, 'short', 'long', 'fast', 'slow'],
@@ -90,20 +93,29 @@ export default {
         ratio: [.1, .25, .5, 1, 2, 3, 4],
         zoom: [1, 2, 5, 10],
       },
+      actionTimer: null,
     }
   },
   mounted() {
     window.addEventListener('keydown', this.handleKeydown)
+    window.addEventListener('mousemove', this.unhide)
+    this.unhide()
   },
   computed: {
     multRounded() {
-      const num = U.math.round(this.mult, 4)
-      const [int, dec] = num.toString().split('.')
-      return `${int}.${dec ? dec.padEnd(4, '0') : '0000'}`
+      return U.math.pad(this.mult % this.mod, 4)
     }
   },
   methods: {
+    unhide() {
+      this.show.menu = true
+      if (this.actionTimer) window.clearTimeout(this.actionTimer)
+      this.actionTimer = window.setTimeout(() => {
+        this.show.menu = false
+      }, 2 * 1000)
+    },
     handleKeydown(key) {
+      this.unhide()
       const nextOpt = (key, mode, wrap) => {
         this.$emit('update:opts', { ...this.opts, [key]: this.seek(this.opts[key], this.choices[key], mode, wrap) })
       }
@@ -113,13 +125,16 @@ export default {
         case 'r': this.$emit('update:delta', -this.delta); break
         case ']': this.$emit('update:mod', this.seek(this.mod, this.choices.mod, '+')); break
         case '[': this.$emit('update:mod', this.seek(this.mod, this.choices.mod, '-')); break
+        case 'l': nextOpt('lineWidth', '+', true); break
+        case 'o': nextOpt('lineAlpha', '+', true); break
         case 'd': nextOpt('drawOrder'); break
         case 'c': nextOpt('colorMode'); break
         case 'a': nextOpt('alphaMode'); break
+        case 'b': nextOpt('trails', '+', true); break
         case 'z': nextOpt('zoom', '+', true); break
-        case 'l': nextOpt('lineWidth', '+', true); break
         case '=': nextOpt('ratio', '+'); break
         case '-': nextOpt('ratio', '-'); break
+        case 'i': this.$emit('update:opts', { ...this.opts, info: !this.opts.info }); break
         case 'ArrowUp': this.$emit('update:delta', this.seek(this.delta, this.choices.delta, '+')); break
         case 'ArrowDown': this.$emit('update:delta', this.seek(this.delta, this.choices.delta, '-')); break
         case 'ArrowLeft': this.$emit('update:mult', Math.ceil(this.mult) - ((this.run && Math.sign(this.delta) > 0) ? 2 : 1)); break
@@ -166,10 +181,16 @@ export default {
   display: flex;
   flex-flow: row;
   justify-content: space-between;
+  opacity: 1;
   background: #000C;
 
   > * {
     margin: .5rem;
+  }
+
+  &.hide {
+    opacity: 0;
+    transition: 3s opacity;
   }
 }
 
