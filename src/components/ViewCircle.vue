@@ -44,6 +44,7 @@ export default {
         trails: 0,
         ratio: window.devicePixelRatio || 1,
         zoom: 1,
+        info: false,
       },
       frame: {
         count: 0,
