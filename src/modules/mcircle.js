@@ -1,7 +1,7 @@
 import * as U from '@/modules/utils.js'
 
 export default class MCircle {
-  constructor(ctx, mod=1000, mult=720, delta=0.05, opts={}, autodraw=true) {
+  constructor(ctx, mod=200, mult=1, delta=0.05, opts={}, autodraw=true) {
     this.ctx = ctx
     this._mod = mod    // modulo (number of lines)
     this._mult = mult  // multiple (determines second point of line)

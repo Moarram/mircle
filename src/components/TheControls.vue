@@ -22,16 +22,16 @@
       </BaseButton> -->
       <div id="fps"><span class="val">{{ fps }}</span>&nbsp;FPS</div>
     </div>
-    <div v-if="show.opts && show.mathOpts" id="data-controls">
+    <div v-if="show.opts" id="data-controls">
       <BaseParam key1="[" key2="]" text="# of lines" :val="mod"/>
       <BaseParam key1="←" key2="→" text="multiple" :val="multRounded"/>
     </div>
-    <div v-if="show.opts && show.animateOpts" id="anim-controls">
+    <div v-if="show.opts" id="anim-controls">
       <BaseParam key1="Space" text="animating" :val="run"/>
       <BaseParam key1="↑" key2="↓" text="delta" :val="delta"/>
       <BaseParam key1="R" text="reverse"/>
     </div>
-    <div v-if="show.opts && show.displayOpts" id="disp-controls">
+    <div v-if="show.opts" id="disp-controls">
       <BaseParam key1="L" text="line width" :val="opts.lineWidth"/>
       <BaseParam key1="O" text="opacity" :val="opts.lineAlpha"/>
       <BaseParam key1="D" text="draw order" :val="opts.drawOrder"/>
@@ -41,6 +41,26 @@
       <BaseParam key1="=" key2="-" text="resolution" :val="`${opts.ratio}x`"/>
       <BaseParam key1="Z" text="zoom" :val="`${opts.zoom}x`"/>
       <BaseParam key1="I" text="show info" :val="opts.info"/>
+    </div>
+    <div v-if="show.test" id="test">
+      <BaseButton
+        :isDisabled="test.toggle"
+        :isOn="test.on"
+        @click=""
+      >
+        Test Button
+      </BaseButton>
+      <BaseButton
+        :isOn="test.toggle"
+        @click="test.toggle = !test.toggle"
+      >
+        Toggle
+      </BaseButton>
+      <BaseButton
+        @click="test.on = !test.on"
+      >
+        On
+      </BaseButton>
     </div>
   </div>
 </template>
@@ -77,9 +97,7 @@ export default {
       show: {
         menu: true,
         opts: false,
-        mathOpts: true,
-        animateOpts: true,
-        displayOpts: true,
+        test: false,
       },
       choices: {
         mod: [10, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800],
@@ -94,6 +112,10 @@ export default {
         zoom: [1, 2, 5, 10],
       },
       actionTimer: null,
+      test: {
+        toggle: false,
+        on: false,
+      }
     }
   },
   mounted() {
@@ -112,7 +134,7 @@ export default {
       if (this.actionTimer) window.clearTimeout(this.actionTimer)
       this.actionTimer = window.setTimeout(() => {
         this.show.menu = false
-      }, 2 * 1000)
+      }, 1000)
     },
     handleKeydown(key) {
       this.unhide()
@@ -205,6 +227,9 @@ export default {
   background: #000C;
 }
 
+#test {
+
+}
 
 .right {
   float: right;

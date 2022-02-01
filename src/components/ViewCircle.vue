@@ -32,8 +32,8 @@ export default {
   },
   data() {
     return {
-      mod: 200,
-      mult: 2,
+      mod: 400,
+      mult: 1,
       delta: .1,
       opts: {
         lineWidth: 1,
