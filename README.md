@@ -1,4 +1,5 @@
-# circle-multiples
+# Mircle
+A circle multiples visualizer. See it live [here](https://moarram.github.io/mircle/). This project is still in development.
 
 ## Project setup
 ```
