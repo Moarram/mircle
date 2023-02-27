@@ -7,13 +7,14 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "tinycolor2": "^1.4.2",
-    "vue": "^3.0.0"
+    "@moarram/util": "git+ssh://git@github.com:moarram/util-js.git",
+    "tinycolor2": "^1",
+    "vue": "^3"
   },
   "devDependencies": {
-    "@vue/cli-service": "~4.5.0",
-    "@vue/compiler-sfc": "^3.0.0",
-    "sass": "^1.26.5",
-    "sass-loader": "^8.0.2"
+    "@vue/cli-service": "^5",
+    "@vue/compiler-sfc": "^3",
+    "sass": "^1",
+    "sass-loader": "^13"
   }
 }
