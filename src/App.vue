@@ -1,14 +1,16 @@
 <template>
-  <ViewCircle/>
+  <div style="margin: auto;">
+    <TheMircle/>
+  </div>
 </template>
 
 <script>
-import ViewCircle from '@/components/ViewCircle.vue'
+import TheMircle from '@/components/TheMircle.vue'
 
 export default {
   name: 'App',
   components: {
-    ViewCircle,
+    TheMircle,
   },
 }
 </script>
@@ -25,6 +27,6 @@ body {
   color: #DDD;
   margin: 0;
   padding: 0;
-  background: #111;
+  background: #070707;
 }
 </style>
