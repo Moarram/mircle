@@ -1,32 +1,39 @@
+<script setup>
+import { draw } from '@moarram/util'
+import { drawMircle, drawMircleFamily, createMircleFamily } from '../modules/mircle'
+import { onMounted } from 'vue';
+
+const props = defineProps({
+  modulo: Number, // The number of points around the Mircle
+})
+
+const emit = defineEmits(['progress'])
+
+function onProgress(msg) {
+  emit('progress', msg)
+}
+
+onMounted(() => {
+  const canvas = document.getElementById('mircle')
+  const abort = createMircleFamily({
+    canvas,
+    modulo: 231,
+    size: 10000,
+    padding: 50,
+    onProgress,
+  })
+
+  window.addEventListener('keydown', event => {
+    if (event.key === 'Escape') abort()
+  })
+})
+</script>
+
 <template>
   <div id="mircle-view">
     <canvas id="mircle"></canvas>
   </div>
 </template>
-
-<script>
-import { draw } from '@moarram/util'
-import { drawMircle, drawMircleFamily, createMircleFamily } from '../modules/mircle'
-
-export default {
-  name: 'TheMircle',
-  components: {},
-  mounted() {
-    this.canvas = document.getElementById('mircle')
-    const abort = createMircleFamily({
-      canvas: this.canvas,
-      modulo: 234,
-      size: 10000,
-    })
-    // TODO refactor component to use composition api (instead of options api)
-    // REF https://vuejs.org/guide/introduction.html#api-styles
-
-    window.addEventListener('keydown', event => {
-      if (event.key === 'Escape') abort()
-    })
-  },
-}
-</script>
 
 <style lang="scss">
 #mircle-view {

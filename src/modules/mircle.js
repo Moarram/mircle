@@ -48,14 +48,20 @@ import util from '@moarram/util'
  * @param {HTMLCanvasElement} canvas - destination canvas
  * @param {number} modulo - number of points around the circle
  * (optional params omitted...)
+ * @param {Function} onProgress - called with progress message
  * 
  * @returns {Function} - abort callback
  */
-export function createMircleFamily({ canvas, modulo, size=500, targetFrameMs=100, padding=10 }) {
+export function createMircleFamily({ canvas, modulo, size=500, targetFrameMs=100, padding=10, onProgress=null }) {
   console.info(`${modulo} = ${primeFactors(modulo).join(' x ')}`)
 
+  function progress(msg) {
+    console.log(msg)
+    onProgress(msg)
+  }
+
   // Compute links
-  console.log('Computing...')
+  progress('Computing...')
   const allLinks = []
   for (let multiple = 0; multiple < modulo; multiple++) {
     allLinks.push(...computeLinks(modulo, multiple))
@@ -77,12 +83,14 @@ export function createMircleFamily({ canvas, modulo, size=500, targetFrameMs=100
   addPositions(groupedLinks, modulo, radius)
 
   // Initialize canvas
-  console.log('Initializing...')
+  progress('Initializing...')
   const ctx = initCanvas(canvas, size)
   
   // Draw
-  console.log('Drawing...')
-  return drawLines(ctx, groupedLinks, targetFrameMs)
+  progress('Drawing...')
+  return drawLines(ctx, groupedLinks, targetFrameMs, progress)
+
+  progress('Done.')
 }
 
 function initCanvas(canvas, size) {
@@ -146,7 +154,7 @@ function addStyle(links, modulo) {
     let thickness = 1
     switch (link.occurrences) {
       case 0:
-        color = { r: 255, g: 50, b: 150, a: .1 }
+        color = { r: 200, g: 50, b: 150, a: .1 }
         break
 
       case 1:
@@ -155,10 +163,10 @@ function addStyle(links, modulo) {
 
       default:
         color = {
-          r: percentOfList(link.occurrences) * 255,
+          r: 255 - (link.start / modulo) * 255,
           g: (1 - percentOfMax(link.occurrences)) * 200 + 55,
           b: (1 - percentOfList(link.occurrences)) * 200 + 55,
-          a: .1 + percentOfList(link.occurrences) * .9,
+          a: .1 + percentOfList(link.occurrences) * .8,
         }
         thickness = 1 + percentOfMax(link.occurrences) * 9
     }
@@ -176,7 +184,7 @@ function addPositions(links, modulo, radius, origin={x:0,y:0}, rotation=(-Math.P
   })
 }
 
-function drawLines(ctx, lines, targetFrameMs) {
+function drawLines(ctx, lines, targetFrameMs, onProgress=null) {
   let index = 0
   let stop = false
   let batchSize = 100 // initial value
@@ -200,8 +208,9 @@ function drawLines(ctx, lines, targetFrameMs) {
       const correction = Math.max(Math.min(targetFrameMs / duration, 2), 0.5)
       batchSize = Math.max(Math.floor(batchSize * correction), 1)
 
-      const progress = Math.floor((index / lines.length) * 1000) / 10
-      console.debug(`(${progress}%) ${batchLines.length} lines in ${duration} ms`)
+      const decimals = 0
+      const progress = Math.floor((index / lines.length) * 100)
+      onProgress(`(${progress}%) ${batchLines.length} lines in ${duration} ms`)
 
       return (index < lines.length) ? drawBatch() : console.log('Done!')
     })

@@ -1,19 +1,16 @@
-<template>
-  <div style="margin: auto;">
-    <TheMircle/>
-  </div>
-</template>
-
-<script>
+<script setup>
+import { ref } from 'vue'
 import TheMircle from '@/components/TheMircle.vue'
 
-export default {
-  name: 'App',
-  components: {
-    TheMircle,
-  },
-}
+const message = ref("")
 </script>
+
+<template>
+  <div style="margin: auto;">
+    <div style="position: fixed; top: 0">{{ message }}</div>
+    <TheMircle @progress="msg => message = msg"/>
+  </div>
+</template>
 
 <style lang="scss">
 body {
