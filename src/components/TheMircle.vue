@@ -17,7 +17,7 @@ onMounted(() => {
   const canvas = document.getElementById('mircle')
   const abort = createMircleFamily({
     canvas,
-    modulo: 231,
+    modulo: 234,
     size: 10000,
     padding: 50,
     onProgress,
