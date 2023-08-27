@@ -1,4 +1,7 @@
 import util from '@moarram/util'
+import { renderMircle } from './render'
+import { layoutMircle } from './layout'
+import { styleMircle } from './style'
 
 // TODO opacity + thickness based roughly on number of lines
 // TODO figure out how to map weighted factors to style (color, thickness, opacity)
@@ -55,42 +58,15 @@ import util from '@moarram/util'
 export function createMircleFamily({ canvas, modulo, size=500, targetFrameMs=100, padding=10, onProgress=null }) {
   console.info(`${modulo} = ${primeFactors(modulo).join(' x ')}`)
 
-  function progress(msg) {
-    console.log(msg)
-    onProgress(msg)
-  }
+  onProgress('Layout...')
+  const mircleLines = layoutMircle({ modulo, size, padding })
 
-  // Compute links
-  progress('Computing...')
-  const allLinks = []
-  for (let multiple = 0; multiple < modulo; multiple++) {
-    allLinks.push(...computeLinks(modulo, multiple))
-  }
+  onProgress('Style...')
+  const styledLines = styleMircle({ lines: mircleLines })
 
-  // Group links
-  const groupedLinks = groupLinks(allLinks, modulo)
-  // const groupedLinks = computeLinks(modulo, 5)
-
-  // Sort links
-  groupedLinks.sort((a, b) => a.start - b.start)
-  groupedLinks.sort((a, b) => a.occurrences - b.occurrences)
-
-  // Add style
-  addStyle(groupedLinks, modulo)
-
-  // Add positions
-  const radius = (size - padding * 2) / 2
-  addPositions(groupedLinks, modulo, radius)
-
-  // Initialize canvas
-  progress('Initializing...')
+  onProgress('Render...')
   const ctx = initCanvas(canvas, size)
-  
-  // Draw
-  progress('Drawing...')
-  return drawLines(ctx, groupedLinks, targetFrameMs, progress)
-
-  progress('Done.')
+  return renderMircle({ ctx, lines: styledLines, onProgress, targetFrameMs })
 }
 
 function initCanvas(canvas, size) {
@@ -100,6 +76,39 @@ function initCanvas(canvas, size) {
   ctx.translate(size / 2, size / 2)
   return ctx
 }
+
+  // // Compute links
+  // progress('Computing...')
+  // const allLinks = []
+  // for (let multiple = 0; multiple < modulo; multiple++) {
+  //   allLinks.push(...computeLinks(modulo, multiple))
+  // }
+
+  // // Group links
+  // const groupedLinks = groupLinks(allLinks, modulo)
+  // // const groupedLinks = computeLinks(modulo, 5)
+
+  // // Sort links
+  // groupedLinks.sort((a, b) => a.start - b.start)
+  // groupedLinks.sort((a, b) => a.occurrences - b.occurrences)
+
+  // // Add style
+  // addStyle(groupedLinks, modulo)
+
+  // // Add positions
+  // const radius = (size - padding * 2) / 2
+  // addPositions(groupedLinks, modulo, radius)
+
+  // // Initialize canvas
+  // progress('Initializing...')
+  // const ctx = initCanvas(canvas, size)
+  
+  // // Draw
+  // progress('Drawing...')
+  // return drawLines(ctx, groupedLinks, targetFrameMs, progress)
+
+  // progress('Done.')
+
 
 function computeLinks(modulo, multiple) {
   const links = []

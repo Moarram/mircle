@@ -10,6 +10,7 @@ const props = defineProps({
 const emit = defineEmits(['progress'])
 
 function onProgress(msg) {
+  console.debug(msg)
   emit('progress', msg)
 }
 
@@ -17,8 +18,8 @@ onMounted(() => {
   const canvas = document.getElementById('mircle')
   const abort = createMircleFamily({
     canvas,
-    modulo: 234,
-    size: 10000,
+    modulo: 138,
+    size: 5000,
     padding: 50,
     onProgress,
   })
