@@ -1,6 +1,6 @@
 <script setup>
 import { draw } from '@moarram/util'
-import { drawMircle, drawMircleFamily, createMircleFamily } from '../modules/mircle'
+import { createMircleFamily } from '../modules/mircle'
 import { onMounted } from 'vue';
 
 const props = defineProps({
@@ -18,8 +18,8 @@ onMounted(() => {
   const canvas = document.getElementById('mircle')
   const abort = createMircleFamily({
     canvas,
-    modulo: 138,
-    size: 5000,
+    modulo: 312,
+    size: 2000,
     padding: 50,
     onProgress,
   })

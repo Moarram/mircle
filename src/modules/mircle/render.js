@@ -2,14 +2,14 @@ import { draw } from "@moarram/util"
 
 /**
  * Render
- * 
+ *
  * Note: this should be async... rather use TypeScript than JSDoc
- * 
+ *
  * @param {CanvasRenderingContext2D} ctx - canvas rendering context
  * @param {StyledLine[]} lines - array of styled lines
  * @param {Function} onComplete - callback with ImageBitmap
  * @param {Function} onProgress - callback with statistics
- * 
+ *
  * @returns {Function} - callback to cancel
  */
 export function renderMircle({ ctx, lines, onComplete=null, onProgress=null, targetFrameMs=100 }) {
@@ -19,16 +19,13 @@ export function renderMircle({ ctx, lines, onComplete=null, onProgress=null, tar
 
   const ctxLines = lines.map(line => ({ ctx, ...line }))
 
-  ctx.globalCompositeOperation = 'lighter'
-  ctx.imageSmoothingEnabled = false
-
   function drawBatch() {
     const batchLines = ctxLines.slice(index, index + batchSize)
     index += batchLines.length
 
     window.requestAnimationFrame(() => {
       if (stop) return
-    
+
       const startTimestamp = Date.now()
       batchLines.forEach(line => draw.line(line))
       const duration = Date.now() - startTimestamp
