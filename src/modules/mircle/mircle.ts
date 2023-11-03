@@ -1,43 +1,68 @@
-import { layoutMircle } from './layout'
+import { layoutMircle, layoutMircleFamily } from './layout'
 import { styleMircle } from './style'
-import { renderMircle } from './render'
-import { primeFactors } from '../utils'
+import { renderMircle, type RenderProgress } from './render'
 
 // TODO opacity + thickness based roughly on number of lines
 // TODO figure out how to map weighted factors to style (color, thickness, opacity)
-// TODO better function arrangement (compute, style, prepare, draw, image)
 // TODO output image at last step
-// TODO progress reporting
-// TODO better names than "link" and "occurences"?
-// TODO define types (as comments)
 // TODO add style before or after computing positions (for distance? color budget?)
 // TODO color based on common multiples, unique color for each number
+
+export type CreateMircleArgs = {
+  canvas: HTMLCanvasElement, // destination canvas
+  modulo: number, // number of points around the circle
+  multiple: number, // multiplier for modulo to find second points
+  size?: number,
+  padding?: number,
+  onProgress?: (message: string) => void,
+}
+export function createMircle({ canvas, modulo, multiple, size=500, padding=10, onProgress }: CreateMircleArgs) {
+  const report = (message: string) => onProgress && onProgress(message)
+
+  report('Layout...')
+  const mircleLines = layoutMircle({ modulo, multiple, size, padding })
+
+  report('Style...')
+  const styledLines = styleMircle({ modulo, lines: mircleLines })
+
+  report('Prepare...')
+  const ctx = initCanvas({ canvas, size })
+  ctx.imageSmoothingEnabled = false
+
+  report('Render...')
+  const onRenderProgress = ({ description, current, total }: RenderProgress) => {
+    report(`${description} (${current}/${total})`)
+  }
+  renderMircle({ ctx, lines: styledLines, size, padding, onProgress: onRenderProgress })
+  report('Done')
+}
 
 export type CreateMircleFamilyArgs = {
   canvas: HTMLCanvasElement, // destination canvas
   modulo: number, // number of points around the circle
   size?: number,
   padding?: number,
-  onProgress?: (msg: string) => void,
-  onComplete?: () => void,
-  targetFrameMs?: number,
+  onProgress?: (message: string) => void,
 }
-export function createMircleFamily({ canvas, modulo, size=500, padding=10, onProgress, onComplete, targetFrameMs=100 }: CreateMircleFamilyArgs): () => void {
-  console.info(`${modulo} = ${primeFactors(modulo).join(' x ')}`)
+export function createMircleFamily({ canvas, modulo, size=500, padding=10, onProgress }: CreateMircleFamilyArgs) {
+  const report = (message: string) => onProgress && onProgress(message)
 
-  onProgress && onProgress('Layout...')
-  const mircleLines = layoutMircle({ modulo, size, padding })
+  report('Layout...')
+  const mircleLines = layoutMircleFamily({ modulo, size, padding })
 
-  onProgress && onProgress('Style...')
+  report('Style...')
   const styledLines = styleMircle({ modulo, lines: mircleLines })
 
-  onProgress && onProgress('Render...')
+  report('Prepare...')
   const ctx = initCanvas({ canvas, size })
-  // draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1, color: '#51F' })
-  // ctx.globalCompositeOperation = 'multiply'
-  ctx.rotate(Math.PI / 4) // 45 deg
   ctx.imageSmoothingEnabled = false
-  return renderMircle({ ctx, lines: styledLines, onProgress, targetFrameMs })
+
+  report('Render...')
+  const onRenderProgress = ({ description, current, total }: RenderProgress) => {
+    report(`${description} (${current}/${total})`)
+  }
+  renderMircle({ ctx, lines: styledLines, size, padding, onProgress: onRenderProgress })
+  report('Done')
 }
 
 type InitCanvasArgs = {

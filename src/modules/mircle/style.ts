@@ -14,7 +14,8 @@ export type StyleMircleArgs = {
   modulo: number,
 }
 export function styleMircle({ lines, modulo }: StyleMircleArgs): StyledLine[] {
-  return addStyle({ lines, modulo }) // TODO a lot more style things
+  return lines.map(line => ({ ...line, color: `rgba(0,0,0,${line.occurrences/200})` }))
+  // return addStyle({ lines, modulo }) // TODO a lot more style things
 }
 
 type AddStyleArgs = {
@@ -22,6 +23,7 @@ type AddStyleArgs = {
   modulo: number,
 }
 function addStyle({ lines, modulo }: AddStyleArgs): StyledLine[] {
+  // TODO bugged when multiple = 4?
   const occurrencesTotals: Record<number,number> = {} // the number of lines with the same occurrences value
   const occurrencesList: number[] = []
   let occurrencesMax = 0

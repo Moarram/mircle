@@ -1,42 +1,42 @@
 import { draw } from '@moarram/util'
 import type { StyledLine } from './style'
 
-// TODO async
+export type RenderProgress = {
+  description: string, // rendering phase name
+  current: number, // completed draw operations
+  total: number, // total draw operations
+}
 
 export type RenderMircleArgs = {
   ctx: CanvasRenderingContext2D,
   lines: StyledLine[],
-  onProgress?: (msg: string) => void,
-  onComplete?: () => void,
-  targetFrameMs?: number,
+  size: number,
+  padding: number,
+  onProgress?: (progress: RenderProgress) => void,
 }
-export function renderMircle({ ctx, lines, onProgress, onComplete, targetFrameMs=100 }: RenderMircleArgs): () => void {
-  let index = 0
-  let stop = false
-  let batchSize = 100 // initial value
+export function renderMircle({ ctx, lines, size, padding, onProgress }: RenderMircleArgs) {
+  draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: '#000' })
+  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1, color: '#F00' })
+  renderLines({ ctx, lines, onProgress })
+}
 
-  const ctxLines = lines.map(line => ({ ctx, ...line }))
-
-  function drawBatch() {
-    const batchLines = ctxLines.slice(index, index + batchSize)
-    index += batchLines.length
-
-    window.requestAnimationFrame(() => {
-      if (stop) return
-
-      const startTimestamp = Date.now()
-      batchLines.forEach(line => draw.line(line))
-      const duration = Date.now() - startTimestamp
-
-      const correction = Math.max(Math.min(targetFrameMs / duration, 2), 0.5)
-      batchSize = Math.max(Math.floor(batchSize * correction), 1)
-
-      const progress = Math.floor((index / lines.length) * 100)
-      onProgress && onProgress(`(${progress}%) ${batchLines.length} lines in ${duration} ms`)
-
-      return (index < lines.length) ? drawBatch() : onProgress && onProgress('Done!')
+type RenderLinesArgs = {
+  ctx: CanvasRenderingContext2D,
+  lines: StyledLine[],
+  onProgress?: (progress: RenderProgress) => void,
+}
+function renderLines({ ctx, lines, onProgress }: RenderLinesArgs) {
+  for (const [i, line] of lines.entries()) { // supposedly for..of performs better than forEach
+    draw.line({ ctx, ...line })
+    onProgress && i % 100 === 0 && onProgress({
+      description: 'Drawing lines',
+      current: i,
+      total: lines.length,
     })
   }
-  drawBatch()
-  return () => stop = true
+  onProgress && onProgress({
+    description: 'Drawing lines',
+    current: lines.length,
+    total: lines.length,
+  })
 }

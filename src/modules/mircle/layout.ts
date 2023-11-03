@@ -23,18 +23,31 @@ export type Grouped<T> = T & {
 
 export type LayoutMircleArgs = {
   modulo: number, // number of points around the circle
+  multiple: number, // mutliplier for modulo to find second points
   size: number, // width and height of image
   padding?: number, // space between circle and edge of image
 }
-export function layoutMircle({ modulo, size, padding=10 }: LayoutMircleArgs): Grouped<MircleLine>[] {
+export function layoutMircle({ modulo, multiple, size, padding=10 }: LayoutMircleArgs): Grouped<MircleLine>[] {
+  const connections = computeConnections({ modulo, multiple })
+  const groupedConnections = groupConnections({ connections, modulo })
+  const radius = (size - padding * 2) / 2
+  return groupedConnections.map(connection => ({
+    ...connection,
+    ...computeLine({ connection, modulo, radius }),
+  }))
+}
+
+export type LayoutMircleFamilyArgs = {
+  modulo: number, // number of points around the circle
+  size: number, // width and height of image
+  padding?: number, // space between circle and edge of image
+}
+export function layoutMircleFamily({ modulo, size, padding=10 }: LayoutMircleFamilyArgs): Grouped<MircleLine>[] {
   const connections: MircleConnection[] = []
   for (let multiple = 0; multiple < modulo; multiple++) {
     connections.push(...computeConnections({ modulo, multiple }))
   }
   const groupedConnections = groupConnections({ connections, modulo })
-  groupedConnections.sort((a, b) => a.start - b.start)
-  groupedConnections.sort((a, b) => a.occurrences - b.occurrences)
-
   const radius = (size - padding * 2) / 2
   return groupedConnections.map(connection => ({
     ...connection,
@@ -58,9 +71,8 @@ function computeConnections({ modulo, multiple }: ComputeConnectionsArgs): Mircl
 type GroupConnectionsArgs = {
   connections: MircleConnection[],
   modulo: number,
-  addEmptyConnections?: boolean,
 }
-function groupConnections({ connections, modulo, addEmptyConnections=true }: GroupConnectionsArgs): Grouped<MircleConnection>[] {
+function groupConnections({ connections, modulo }: GroupConnectionsArgs): Grouped<MircleConnection>[] {
   const groups: Record<number,Record<number,number>> = {} // { start: { end: n, end2: n, ... }, start2: {}, ... }
   connections.forEach(connection => {
     const start = Math.min(connection.start, connection.end)
@@ -73,11 +85,13 @@ function groupConnections({ connections, modulo, addEmptyConnections=true }: Gro
   for (let start = 0; start < modulo; start++) {
     for (let end = start; end < modulo; end++) {
       const occurrences = (start in groups && end in groups[start]) ? groups[start][end] : 0
-      if (occurrences || addEmptyConnections) {
+      if (occurrences) {
         grouped.push({ start, end, occurrences })
       }
     }
   }
+  grouped.sort((a, b) => a.start - b.start)
+  grouped.sort((a, b) => a.occurrences - b.occurrences)
   return grouped
 }
 
