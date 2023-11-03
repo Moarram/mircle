@@ -1,5 +1,5 @@
 
-export function primeFactors(n) {
+export function primeFactors(n: number): number[] {
   const factors = [];
   let divisor = 2;
   while (n >= 2) {

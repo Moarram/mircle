@@ -1,5 +1,4 @@
-<script setup>
-import { draw } from '@moarram/util'
+<script setup lang="ts">
 import { createMircleFamily } from '../modules/mircle'
 import { onMounted } from 'vue';
 
@@ -9,13 +8,13 @@ const props = defineProps({
 
 const emit = defineEmits(['progress'])
 
-function onProgress(msg) {
+function onProgress(msg: string) {
   console.debug(msg)
   emit('progress', msg)
 }
 
 onMounted(() => {
-  const canvas = document.getElementById('mircle')
+  const canvas = document.getElementById('mircle') as HTMLCanvasElement
   const abort = createMircleFamily({
     canvas,
     modulo: 312,

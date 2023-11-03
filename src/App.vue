@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-// @ts-expect-error TODO add types
 import TheMircle from './components/TheMircle.vue'
 
 const message = ref("")

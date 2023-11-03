@@ -1,18 +1,16 @@
-import { draw } from "@moarram/util"
+import { draw } from '@moarram/util'
+import type { StyledLine } from './style'
 
-/**
- * Render
- *
- * Note: this should be async... rather use TypeScript than JSDoc
- *
- * @param {CanvasRenderingContext2D} ctx - canvas rendering context
- * @param {StyledLine[]} lines - array of styled lines
- * @param {Function} onComplete - callback with ImageBitmap
- * @param {Function} onProgress - callback with statistics
- *
- * @returns {Function} - callback to cancel
- */
-export function renderMircle({ ctx, lines, onComplete=null, onProgress=null, targetFrameMs=100 }) {
+// TODO async
+
+export type RenderMircleArgs = {
+  ctx: CanvasRenderingContext2D,
+  lines: StyledLine[],
+  onProgress?: (msg: string) => void,
+  onComplete?: () => void,
+  targetFrameMs?: number,
+}
+export function renderMircle({ ctx, lines, onProgress, onComplete, targetFrameMs=100 }: RenderMircleArgs): () => void {
   let index = 0
   let stop = false
   let batchSize = 100 // initial value
@@ -34,9 +32,9 @@ export function renderMircle({ ctx, lines, onComplete=null, onProgress=null, tar
       batchSize = Math.max(Math.floor(batchSize * correction), 1)
 
       const progress = Math.floor((index / lines.length) * 100)
-      onProgress(`(${progress}%) ${batchLines.length} lines in ${duration} ms`)
+      onProgress && onProgress(`(${progress}%) ${batchLines.length} lines in ${duration} ms`)
 
-      return (index < lines.length) ? drawBatch() : onProgress('Done!')
+      return (index < lines.length) ? drawBatch() : onProgress && onProgress('Done!')
     })
   }
   drawBatch()

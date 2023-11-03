@@ -1,0 +1,98 @@
+import { math } from '@moarram/util'
+
+export type Point = {
+  x: number, // horizontal offset from left
+  y: number, // vertical offset from top
+}
+
+export type Line = {
+  pos: Point, // start position
+  pos2: Point, // end position
+}
+
+export type MircleConnection = {
+  start: number,
+  end: number,
+}
+
+export type MircleLine = Line & MircleConnection
+
+export type Grouped<T> = T & {
+  occurrences: number,
+}
+
+export type LayoutMircleArgs = {
+  modulo: number, // number of points around the circle
+  size: number, // width and height of image
+  padding?: number, // space between circle and edge of image
+}
+export function layoutMircle({ modulo, size, padding=10 }: LayoutMircleArgs): Grouped<MircleLine>[] {
+  const connections: MircleConnection[] = []
+  for (let multiple = 0; multiple < modulo; multiple++) {
+    connections.push(...computeConnections({ modulo, multiple }))
+  }
+  const groupedConnections = groupConnections({ connections, modulo })
+  groupedConnections.sort((a, b) => a.start - b.start)
+  groupedConnections.sort((a, b) => a.occurrences - b.occurrences)
+
+  const radius = (size - padding * 2) / 2
+  return groupedConnections.map(connection => ({
+    ...connection,
+    ...computeLine({ connection, modulo, radius }),
+  }))
+}
+
+type ComputeConnectionsArgs = {
+  modulo: number,
+  multiple: number,
+}
+function computeConnections({ modulo, multiple }: ComputeConnectionsArgs): MircleConnection[] {
+  const connections = []
+  for (let start = 0; start < modulo; start++) {
+    const end = (start * multiple) % modulo
+    connections.push({ start, end })
+  }
+  return connections
+}
+
+type GroupConnectionsArgs = {
+  connections: MircleConnection[],
+  modulo: number,
+  addEmptyConnections?: boolean,
+}
+function groupConnections({ connections, modulo, addEmptyConnections=true }: GroupConnectionsArgs): Grouped<MircleConnection>[] {
+  const groups: Record<number,Record<number,number>> = {} // { start: { end: n, end2: n, ... }, start2: {}, ... }
+  connections.forEach(connection => {
+    const start = Math.min(connection.start, connection.end)
+    const end = Math.max(connection.start, connection.end)
+    if (!(start in groups)) groups[start] = {}
+    if (!(end in groups[start])) groups[start][end] = 0
+    groups[start][end] += 1
+  })
+  const grouped: Grouped<MircleConnection>[] = []
+  for (let start = 0; start < modulo; start++) {
+    for (let end = start; end < modulo; end++) {
+      const occurrences = (start in groups && end in groups[start]) ? groups[start][end] : 0
+      if (occurrences || addEmptyConnections) {
+        grouped.push({ start, end, occurrences })
+      }
+    }
+  }
+  return grouped
+}
+
+type ComputeLineArgs = {
+  connection: MircleConnection,
+  modulo: number,
+  radius: number,
+  origin?: Point,
+  rotation?: number, // radians
+}
+function computeLine({ connection, modulo, radius, origin={x:0,y:0}, rotation=(-Math.PI/2) }: ComputeLineArgs): Line {
+  const ang = (connection.start / modulo) * Math.PI * 2 + rotation
+  const ang2 = (connection.end / modulo) * Math.PI * 2 + rotation
+  return {
+    pos: math.cartesian({ ang: ang, mag: radius }, origin),
+    pos2: math.cartesian({ ang: ang2, mag: radius }, origin),
+  }
+}
