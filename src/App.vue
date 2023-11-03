@@ -1,6 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
-import TheMircle from '@/components/TheMircle.vue'
+// @ts-expect-error TODO add types
+import TheMircle from './components/TheMircle.vue'
 
 const message = ref("")
 </script>
@@ -8,11 +9,11 @@ const message = ref("")
 <template>
   <div style="margin: auto;">
     <div style="position: fixed; top: 0">{{ message }}</div>
-    <TheMircle @progress="msg => message = msg"/>
+    <TheMircle @progress="(msg: string) => message = msg"/>
   </div>
 </template>
 
-<style lang="scss">
+<style>
 body {
   margin: 0;
   background: black

@@ -36,7 +36,7 @@ onMounted(() => {
   </div>
 </template>
 
-<style lang="scss">
+<style>
 #mircle-view {
   height: 100vh;
   width: 100vh;
