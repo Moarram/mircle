@@ -14,7 +14,12 @@ export type StyleMircleArgs = {
   modulo: number,
 }
 export function styleMircle({ lines, modulo }: StyleMircleArgs): StyledLine[] {
-  return lines.map(line => ({ ...line, color: `rgba(0,0,0,${line.occurrences/200})` }))
+  const max = lines.reduce((acc, line) => Math.max(line.occurrences, acc), 0)
+  return lines.map(line => ({
+    ...line,
+    // color: '#00000003',
+    color: `rgba(0,0,0,${line.occurrences/max})`
+  }))
   // return addStyle({ lines, modulo }) // TODO a lot more style things
 }
 

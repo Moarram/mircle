@@ -23,29 +23,18 @@ export type Grouped<T> = T & {
 
 export type LayoutMircleArgs = {
   modulo: number, // number of points around the circle
-  multiple: number, // mutliplier for modulo to find second points
+  multiple?: number, // mutliplier for modulo to find second points, otherwise all
   size: number, // width and height of image
   padding?: number, // space between circle and edge of image
 }
-export function layoutMircle({ modulo, multiple, size, padding=10 }: LayoutMircleArgs): Grouped<MircleLine>[] {
-  const connections = computeConnections({ modulo, multiple })
-  const groupedConnections = groupConnections({ connections, modulo })
-  const radius = (size - padding * 2) / 2
-  return groupedConnections.map(connection => ({
-    ...connection,
-    ...computeLine({ connection, modulo, radius }),
-  }))
-}
-
-export type LayoutMircleFamilyArgs = {
-  modulo: number, // number of points around the circle
-  size: number, // width and height of image
-  padding?: number, // space between circle and edge of image
-}
-export function layoutMircleFamily({ modulo, size, padding=10 }: LayoutMircleFamilyArgs): Grouped<MircleLine>[] {
+export function layoutMircle({ modulo, multiple, size, padding=0 }: LayoutMircleArgs): Grouped<MircleLine>[] {
   const connections: MircleConnection[] = []
-  for (let multiple = 0; multiple < modulo; multiple++) {
+  if (multiple !== undefined) {
     connections.push(...computeConnections({ modulo, multiple }))
+  } else {
+    for (let multiple = 0; multiple < modulo; multiple++) {
+      connections.push(...computeConnections({ modulo, multiple }))
+    }
   }
   const groupedConnections = groupConnections({ connections, modulo })
   const radius = (size - padding * 2) / 2

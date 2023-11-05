@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { createMircle, createMircleFamily } from '../modules/mircle'
+import type { Progress } from '../modules/types';
+import { createMircle, createMircleWithWorker } from '../modules/mircle'
 import { onMounted } from 'vue';
 
 const props = defineProps({
@@ -8,31 +9,26 @@ const props = defineProps({
 
 const emit = defineEmits(['progress'])
 
-function onProgress(message: string) {
-  console.debug(`[mircle] ${message}`)
-  emit('progress', message)
+function onProgress(progress: Progress) {
+  emit('progress', progress)
 }
 
 onMounted(() => {
   const canvas = document.getElementById('mircle') as HTMLCanvasElement
-  // createMircle({
-  //   canvas,
-  //   modulo: 1000,
-  //   multiple: 6,
-  //   size: 5000,
-  //   padding: 50,
-  //   onProgress,
-  // })
-  createMircleFamily({
-    canvas,
+  const offscreenCanvas = canvas.transferControlToOffscreen()
+  const controller = new AbortController()
+
+  createMircleWithWorker({
+    canvas: offscreenCanvas,
     modulo: 356,
     size: 1000,
     padding: 50,
     onProgress,
+    signal: controller.signal
   })
 
   window.addEventListener('keydown', event => {
-    // if (event.key === 'Escape') abort()
+    if (event.key === 'Escape') controller.abort()
   })
 })
 </script>
