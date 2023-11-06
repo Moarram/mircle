@@ -15,25 +15,31 @@ export function initCanvas({ canvas, size }: InitCanvasArgs): CanvasRenderingCon
   return ctx
 }
 
-export type RenderMircleArgs = {
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  lines: StyledLine[],
-  size: number,
-  padding: number,
-  onProgress?: (progress: Progress) => void,
-}
-export function renderMircle({ ctx, lines, size, padding, onProgress }: RenderMircleArgs) {
-  draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: '#000' })
-  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1, color: '#F00' })
-  renderLines({ ctx, lines, onProgress })
+export type BackgroundStyleConfig = {
+  // TODO
 }
 
-type RenderLinesArgs = {
+export type DrawMircleBackgroundArgs = {
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  size: number,
+  padding: number,
+  styles: BackgroundStyleConfig,
+  onProgress?: (progress: Progress) => void,
+}
+export function drawMircleBackground({ ctx, size, padding, onProgress }: DrawMircleBackgroundArgs) {
+  onProgress && onProgress({ message: 'Drawing background', current: 0, total: 2 })
+  draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: '#000' })
+  onProgress && onProgress({ message: 'Drawing background', current: 1, total: 2 })
+  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1, color: '#FFF' })
+  onProgress && onProgress({ message: 'Drawing background', current: 2, total: 2 })
+}
+
+export type DrawMircleLinesArgs = {
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   lines: StyledLine[],
   onProgress?: (progress: Progress) => void,
 }
-function renderLines({ ctx, lines, onProgress }: RenderLinesArgs) {
+export function drawMircleLines({ ctx, lines, onProgress }: DrawMircleLinesArgs) {
   for (const [i, line] of lines.entries()) { // supposedly for..of performs better than forEach
     draw.line({ ctx, ...line })
     onProgress && i % 100 === 0 && onProgress({

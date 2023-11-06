@@ -9,11 +9,16 @@ export type StyledLine = {
   thickness?: number, // width of line
 }
 
+export type LineStyleConfig = {
+  // TODO
+}
+
 export type StyleMircleArgs = {
   lines: Grouped<MircleLine>[],
   modulo: number,
+  styles: LineStyleConfig,
 }
-export function styleMircle({ lines, modulo }: StyleMircleArgs): StyledLine[] {
+export function styleMircleLines({ lines, modulo, styles }: StyleMircleArgs): StyledLine[] {
   const max = lines.reduce((acc, line) => Math.max(line.occurrences, acc), 0)
   return lines.map(line => ({
     ...line,

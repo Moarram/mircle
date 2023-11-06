@@ -1,41 +1,54 @@
 <script setup lang="ts">
-import type { Progress } from '../modules/types';
-import { createMircle, createMircleWithWorker } from '../modules/mircle'
-import { onMounted } from 'vue';
+import { onMounted, toRaw } from 'vue';
+import type { Progress } from '@/types';
+import type { LayoutMircleArgs } from '@/mircle/layout';
+import { createMircle, type StyleMircleConfig } from '@/mircle/mircle'
 
-const props = defineProps({
-  modulo: Number, // The number of points around the Mircle
+const props = defineProps<{
+  layout: LayoutMircleArgs,
+  config: StyleMircleConfig,
+}>()
+
+const emit = defineEmits<{
+  progress: [progress: Progress]
+}>()
+
+defineExpose({
+  render,
+  abort,
 })
 
-const emit = defineEmits(['progress'])
+let controller: AbortController
+let canvas: HTMLCanvasElement
+
+async function render() {
+  controller = new AbortController()
+  await createMircle({
+    canvas,
+    layout: toRaw(props.layout),
+    styles: toRaw(props.config),
+    onProgress,
+    signal: controller.signal
+  })
+}
+
+function abort() {
+  if (!controller) return
+  controller.abort()
+}
 
 function onProgress(progress: Progress) {
   emit('progress', progress)
 }
 
 onMounted(() => {
-  const canvas = document.getElementById('mircle') as HTMLCanvasElement
-  const offscreenCanvas = canvas.transferControlToOffscreen()
-  const controller = new AbortController()
-
-  createMircleWithWorker({
-    canvas: offscreenCanvas,
-    modulo: 356,
-    size: 1000,
-    padding: 50,
-    onProgress,
-    signal: controller.signal
-  })
-
-  window.addEventListener('keydown', event => {
-    if (event.key === 'Escape') controller.abort()
-  })
+  canvas = document.getElementById('mircle') as HTMLCanvasElement
 })
 </script>
 
 <template>
   <div id="mircle-view">
-    <canvas id="mircle"></canvas>
+    <canvas id="mircle"/>
   </div>
 </template>
 
