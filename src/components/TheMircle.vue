@@ -1,44 +1,38 @@
 <script setup lang="ts">
-import { onMounted, toRaw } from 'vue';
-import type { Progress } from '@/types';
-import type { LayoutMircleArgs } from '@/mircle/layout';
-import { createMircle, type StyleMircleConfig } from '@/mircle/mircle'
-
-const props = defineProps<{
-  layout: LayoutMircleArgs,
-  config: StyleMircleConfig,
-}>()
-
-const emit = defineEmits<{
-  progress: [progress: Progress]
-}>()
+import { onMounted, ref, toRaw } from 'vue';
+import ProgressBar from '@/components/ProgressBar.vue'
+import { store } from '@/store';
+import { createMircle } from '@/mircle/mircle'
 
 defineExpose({
   render,
   abort,
 })
 
-let controller: AbortController
+let controller: AbortController | undefined
 let canvas: HTMLCanvasElement
 
+const progressPercent = ref<number>()
+
 async function render() {
+  store.isRendering = true
+  progressPercent.value = 0
+  await new Promise(resolve => requestAnimationFrame(resolve))
   controller = new AbortController()
   await createMircle({
     canvas,
-    layout: toRaw(props.layout),
-    styles: toRaw(props.config),
-    onProgress,
-    signal: controller.signal
+    layout: toRaw(store.layout),
+    styles: toRaw(store.styles),
+    onProgress: p => progressPercent.value = p,
+    signal: toRaw(controller.signal)
   })
+  controller = undefined
+  store.isRendering = false
 }
 
 function abort() {
   if (!controller) return
   controller.abort()
-}
-
-function onProgress(progress: Progress) {
-  emit('progress', progress)
 }
 
 onMounted(() => {
@@ -48,7 +42,10 @@ onMounted(() => {
 
 <template>
   <div id="mircle-view">
-    <canvas id="mircle"/>
+    <canvas id="mircle" :style="{opacity: store.isRendering ? .5 : 1}"/>
+    <div id="progress" v-if="store.isRendering">
+      <ProgressBar :percent="progressPercent || 0" />
+    </div>
   </div>
 </template>
 
@@ -56,9 +53,18 @@ onMounted(() => {
 #mircle-view {
   height: 100vh;
   width: 100vh;
+  position: relative;
 }
 #mircle {
   width: 100%;
   height: 100%;
+  display: block;
+}
+#progress {
+  width: 20rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 </style>

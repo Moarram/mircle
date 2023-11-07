@@ -1,39 +1,8 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import TheMircle from '@/components/TheMircle.vue'
-import type { Progress } from '@/types';
-import type { LayoutMircleArgs } from './mircle/layout';
-import type { StyleMircleConfig } from './mircle/mircle';
 
 const mircle = ref<InstanceType<typeof TheMircle> | null>(null)
-
-const messages = reactive<string[]>([])
-const lastTime = ref<number>(Date.now())
-
-const layout = reactive<LayoutMircleArgs>({
-  modulo: 700,
-  multiple: undefined,
-  size: 5000,
-  padding: 50,
-})
-
-const config = reactive<StyleMircleConfig>({
-  lines: {},
-  background: {},
-})
-
-function handleProgress({ message, current, total }: Progress) {
-  const report = (message: string) => {
-    const currentTime = Date.now()
-    messages.push(`${message} ${currentTime - lastTime.value}ms`)
-    lastTime.value = Date.now()
-  }
-  if (!total) {
-    report(message)
-  } else {
-    report(`${message} (${current}/${total})`)
-  }
-}
 
 onMounted(() => {
   window.addEventListener('keydown', event => {
@@ -50,12 +19,7 @@ onMounted(() => {
 
 <template>
   <main>
-    <TheMircle ref="mircle" @progress="handleProgress" :layout="layout" :config="config" />
-    <div style="font-size: 10px;">
-      <div v-for="(message, i) in messages" :key="i">
-        {{ message }}
-      </div>
-    </div>
+    <TheMircle ref="mircle"/>
   </main>
 </template>
 

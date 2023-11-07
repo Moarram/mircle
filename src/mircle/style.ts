@@ -1,5 +1,10 @@
 import type { Grouped, MircleLine, Point } from './layout'
 
+// TODO opacity + thickness based roughly on number of lines
+// TODO figure out how to map weighted factors to style (color, thickness, opacity)
+// TODO add style before or after computing positions (for distance? color budget?)
+// TODO color based on common multiples, unique color for each number
+
 export type StyledLine = {
   pos: Point, // start position
   pos2: Point, // end position
@@ -23,7 +28,8 @@ export function styleMircleLines({ lines, modulo, styles }: StyleMircleArgs): St
   return lines.map(line => ({
     ...line,
     // color: '#00000003',
-    color: `rgba(0,0,0,${line.occurrences/max})`
+    color: `rgba(0,0,0,${line.occurrences / max})`,
+    thickness: 1 + (line.occurrences / max) * 20
   }))
   // return addStyle({ lines, modulo }) // TODO a lot more style things
 }

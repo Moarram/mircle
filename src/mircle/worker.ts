@@ -1,5 +1,4 @@
 import { renderMircle, type StyleMircleConfig } from "./mircle"
-import type { Progress } from "../types"
 import type { LayoutMircleArgs } from "./layout"
 
 export type WorkerRequest = WorkerRenderRequest
@@ -11,7 +10,7 @@ type WorkerRenderRequest = {
 
 export type WorkerResponse = WorkerProgressResponse | WorkerFinishedResponse
 type WorkerProgressResponse = {
-  progress: Progress,
+  progressPercent: number,
 }
 type WorkerFinishedResponse = {
   result: ImageBitmap
@@ -24,7 +23,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
     renderMircle({
       ...request,
       canvas,
-      onProgress: (progress: Progress) => self.postMessage({ progress })
+      onProgress: progressPercent => self.postMessage({ progressPercent })
     })
     const bitmap = canvas.transferToImageBitmap()
     self.postMessage({ result: bitmap }, [bitmap]) // transfer bitmap to main thread
