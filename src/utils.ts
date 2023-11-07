@@ -12,3 +12,9 @@ export function primeFactors(n: number): number[] {
   }
   return factors;
 }
+
+export async function delayFrames(n: number) {
+  for (let i = 0; i < n; i++) {
+    await new Promise(resolve => window.requestAnimationFrame(resolve))
+  }
+}

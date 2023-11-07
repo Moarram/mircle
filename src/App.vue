@@ -1,25 +1,24 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import TheMircle from '@/components/TheMircle.vue'
+import { store } from './store';
+import TheControls from './components/TheControls.vue';
 
-const mircle = ref<InstanceType<typeof TheMircle> | null>(null)
+const mircle = ref<InstanceType<typeof TheMircle>>()
 
 onMounted(() => {
-  window.addEventListener('keydown', event => {
-    if (event.key === 'Enter') {
-      mircle.value?.render()
-    }
-    if (event.key === 'Escape') {
-      mircle.value?.abort()
-    }
-  })
+  const size = Math.min(window.innerWidth, window.innerHeight) * (window.devicePixelRatio || 1) *2
+  // store.layout.size = size
+  store.layout.padding = size / 100
+  mircle.value?.render()
 })
 
 </script>
 
 <template>
   <main>
-    <TheMircle ref="mircle"/>
+    <TheMircle ref="mircle" />
+    <TheControls @render="mircle?.render" @abort="mircle?.abort" @download="mircle?.download" />
   </main>
 </template>
 

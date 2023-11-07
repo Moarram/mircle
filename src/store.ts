@@ -6,6 +6,7 @@ export type Store = {
   layout: LayoutMircleArgs,
   styles: StyleMircleConfig,
   isRendering: boolean,
+  isDownloading: boolean,
 }
 export const store = reactive({
   layout: {
@@ -19,4 +20,5 @@ export const store = reactive({
     background: {},
   },
   isRendering: false,
+  isDownloading: false,
 })

@@ -27,7 +27,7 @@ export type DrawMircleBackgroundArgs = {
 }
 export function drawMircleBackground({ ctx, size, padding }: DrawMircleBackgroundArgs) {
   draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: '#000' })
-  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1, color: '#FFF' })
+  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1, color: '#111' })
 }
 
 export type DrawMircleLinesArgs = {

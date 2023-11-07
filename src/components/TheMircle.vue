@@ -7,18 +7,21 @@ import { createMircle } from '@/mircle/mircle'
 defineExpose({
   render,
   abort,
+  download,
 })
 
 let controller: AbortController | undefined
 let canvas: HTMLCanvasElement
 
+// TODO separate layout, style, and draw progress
+// TODO show progress bar as circle
 const progressPercent = ref<number>()
 
 async function render() {
   store.isRendering = true
   progressPercent.value = 0
-  await new Promise(resolve => requestAnimationFrame(resolve))
   controller = new AbortController()
+
   await createMircle({
     canvas,
     layout: toRaw(store.layout),
@@ -26,13 +29,25 @@ async function render() {
     onProgress: p => progressPercent.value = p,
     signal: toRaw(controller.signal)
   })
+
   controller = undefined
   store.isRendering = false
 }
 
 function abort() {
-  if (!controller) return
-  controller.abort()
+  controller?.abort()
+}
+
+async function download() {
+  store.isDownloading = true
+  const blob = await new Promise<Blob|null>(resolve => canvas.toBlob(resolve))
+  if (!blob) return // TODO handle instead of silent fail
+  const link = document.createElement('a')
+  link.download = `mircle${store.layout.modulo}.png`
+  link.href = URL.createObjectURL(blob)
+  link.click()
+  URL.revokeObjectURL(link.href) // cleanup
+  store.isDownloading = false
 }
 
 onMounted(() => {
@@ -42,8 +57,8 @@ onMounted(() => {
 
 <template>
   <div id="mircle-view">
-    <canvas id="mircle" :style="{opacity: store.isRendering ? .5 : 1}"/>
-    <div id="progress" v-if="store.isRendering">
+    <canvas id="mircle" :class="{ rendering: store.isRendering }" />
+    <div id="progress" :class="{ rendering: store.isRendering }">
       <ProgressBar :percent="progressPercent || 0" />
     </div>
   </div>
@@ -51,20 +66,31 @@ onMounted(() => {
 
 <style>
 #mircle-view {
-  height: 100vh;
-  width: 100vh;
+  height: min(100vw, 100vh);
+  width: min(100vw, 100vh);
   position: relative;
 }
+
 #mircle {
   width: 100%;
   height: 100%;
   display: block;
+
+  &.rendering {
+    display: none;
+  }
 }
+
 #progress {
   width: 20rem;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  display: none;
+
+  &.rendering {
+    display: block;
+  }
 }
 </style>

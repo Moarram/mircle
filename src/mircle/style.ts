@@ -27,9 +27,9 @@ export function styleMircleLines({ lines, modulo, styles }: StyleMircleArgs): St
   const max = lines.reduce((acc, line) => Math.max(line.occurrences, acc), 0)
   return lines.map(line => ({
     ...line,
-    // color: '#00000003',
-    color: `rgba(0,0,0,${line.occurrences / max})`,
-    thickness: 1 + (line.occurrences / max) * 20
+    // color: '#FFF2',
+    color: `rgba(255,255,255,${Math.min(line.occurrences / max * 3, 1)})`,
+    // thickness: 1 + (line.occurrences / max) * 10
   }))
   // return addStyle({ lines, modulo }) // TODO a lot more style things
 }
