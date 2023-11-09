@@ -5,20 +5,22 @@ import type { StyleMircleConfig } from './mircle/mircle'
 export type Store = {
   layout: LayoutMircleArgs,
   styles: StyleMircleConfig,
-  isRendering: boolean,
+  autoRender: boolean,
   isDownloading: boolean,
+  isRendering: boolean,
 }
 export const store = reactive({
   layout: {
-    modulo: 450,
+    modulo: 100,
     multiple: undefined,
-    size: 7000,
-    padding: 10,
+    size: 1000,
+    padding: 0,
   },
   styles: {
     lines: {},
     background: {},
   },
-  isRendering: false,
+  autoRender: true,
   isDownloading: false,
+  isRendering: false,
 })

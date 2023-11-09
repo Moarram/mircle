@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { store } from '@/store'
 import BaseButton from './BaseButton.vue';
+import BaseCheckbox from './BaseCheckbox.vue';
 
 const emit = defineEmits<{
   render: [],
@@ -24,11 +25,25 @@ const emit = defineEmits<{
       content="Download"
       class="btn"
     />
+    <div>
+      <BaseCheckbox
+        id="auto-render"
+        v-model="store.autoRender"
+      />
+      <label for="auto-render">
+        Auto-render
+      </label>
+    </div>
   </div>
 </template>
 
 <style scoped>
+#controls {
+  padding: .5rem;
+  display: flex;
+  flex-flow: row wrap;
+}
 .btn {
-  margin: .2rem;
+  margin-right: .5rem;
 }
 </style>

@@ -12,9 +12,12 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <input type="button" @click="emit('click')" :disabled="disabled" :value="content">
+  <input type="button" @click="emit('click')" :disabled="props.disabled" :value="props.content">
 </template>
 
 <style scoped>
-
+input {
+  font-family: inherit;
+  font-size: inherit;
+}
 </style>

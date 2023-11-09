@@ -20,7 +20,7 @@ export async function createMircle({ canvas, layout, styles, onProgress, signal 
   const bitmap = await renderMircleWithWorker({ layout, styles, onProgress, signal })
   if (!bitmap) return // aborted
 
-  await delayFrames(2) // allow UI to update
+  await delayFrames(2) // give ui a chance to update
 
   console.debug('Drawing bitmap...')
   canvas.width = bitmap.width

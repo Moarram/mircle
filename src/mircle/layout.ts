@@ -52,7 +52,7 @@ function computeConnections({ modulo, multiple }: ComputeConnectionsArgs): Mircl
   const connections = []
   for (let start = 0; start < modulo; start++) {
     const end = (start * multiple) % modulo
-    connections.push({ start, end })
+    if (start !== end) connections.push({ start, end })
   }
   return connections
 }
@@ -74,7 +74,8 @@ function groupConnections({ connections, modulo }: GroupConnectionsArgs): Groupe
   for (let start = 0; start < modulo; start++) {
     for (let end = start; end < modulo; end++) {
       const occurrences = (start in groups && end in groups[start]) ? groups[start][end] : 0
-      if (occurrences) {
+      // if (occurrences) {
+      if (start !== end) {
         grouped.push({ start, end, occurrences })
       }
     }
