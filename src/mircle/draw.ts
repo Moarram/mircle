@@ -16,7 +16,8 @@ export function initCanvas({ canvas, size }: InitCanvasArgs): CanvasRenderingCon
 }
 
 export type BackgroundStyleConfig = {
-  // TODO
+  base: string,
+  circle: string,
 }
 
 export type DrawMircleBackgroundArgs = {
@@ -25,9 +26,9 @@ export type DrawMircleBackgroundArgs = {
   padding: number,
   styles: BackgroundStyleConfig,
 }
-export function drawMircleBackground({ ctx, size, padding }: DrawMircleBackgroundArgs) {
-  draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: '#000' })
-  // draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1, color: '#111' })
+export function drawMircleBackground({ ctx, size, padding, styles }: DrawMircleBackgroundArgs) {
+  draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: styles.base })
+  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1, color: styles.circle })
 }
 
 export type DrawMircleLinesArgs = {

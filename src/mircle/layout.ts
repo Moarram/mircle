@@ -36,7 +36,7 @@ export function layoutMircle({ modulo, multiple, size, padding=0 }: LayoutMircle
       connections.push(...computeConnections({ modulo, multiple }))
     }
   }
-  const groupedConnections = groupConnections({ connections, modulo })
+  const groupedConnections = groupConnections({ connections, modulo, includeMissing: true })
   const radius = (size - padding * 2) / 2
   return groupedConnections.map(connection => ({
     ...connection,
@@ -60,8 +60,9 @@ function computeConnections({ modulo, multiple }: ComputeConnectionsArgs): Mircl
 type GroupConnectionsArgs = {
   connections: MircleConnection[],
   modulo: number,
+  includeMissing?: boolean,
 }
-function groupConnections({ connections, modulo }: GroupConnectionsArgs): Grouped<MircleConnection>[] {
+function groupConnections({ connections, modulo, includeMissing }: GroupConnectionsArgs): Grouped<MircleConnection>[] {
   const groups: Record<number,Record<number,number>> = {} // { start: { end: n, end2: n, ... }, start2: {}, ... }
   connections.forEach(connection => {
     const start = Math.min(connection.start, connection.end)
@@ -75,7 +76,7 @@ function groupConnections({ connections, modulo }: GroupConnectionsArgs): Groupe
     for (let end = start; end < modulo; end++) {
       const occurrences = (start in groups && end in groups[start]) ? groups[start][end] : 0
       // if (occurrences) {
-      if (start !== end) {
+      if ((occurrences || includeMissing) && start !== end) {
         grouped.push({ start, end, occurrences })
       }
     }

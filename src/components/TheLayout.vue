@@ -3,6 +3,7 @@ import { store } from '@/store'
 import BaseNumber from './BaseNumber.vue';
 import { primeFactors } from '@/utils';
 import { computed } from 'vue';
+import BaseButton from './BaseButton.vue';
 
 const factors = computed(() => primeFactors(store.layout.modulo))
 const lines = computed(() => (store.layout.modulo * (store.layout.modulo - 1)) / 2)
@@ -21,6 +22,10 @@ const lines = computed(() => (store.layout.modulo * (store.layout.modulo - 1)) /
       />
       <div>px</div>
     </div>
+    <BaseButton content="small" @click="store.layout.size = 1000" />
+    <BaseButton content="medium" @click="store.layout.size = 2000" />
+    <BaseButton content="large" @click="store.layout.size = 4000" />
+    <BaseButton content="huge" @click="store.layout.size = 10000" style="color: #B00" />
     <div class="param">
       <label>Points:</label>
       <BaseNumber

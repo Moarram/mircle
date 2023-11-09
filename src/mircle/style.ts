@@ -15,7 +15,8 @@ export type StyledLine = {
 }
 
 export type LineStyleConfig = {
-  // TODO
+  missing: string,
+  //...
 }
 
 export type StyleMircleArgs = {
@@ -28,8 +29,8 @@ export function styleMircleLines({ lines, modulo, styles }: StyleMircleArgs): St
   return lines.map(line => ({
     ...line,
     // color: '#FFF2',
-    color: line.occurrences ? `rgba(255,255,255,${Math.max(.05, Math.min(line.occurrences / max * 3, 1))})` : '#F055',
-    // thickness: 1 + (line.occurrences / max) * 10
+    color: line.occurrences ? `rgba(255,150,120,${Math.max(.05, Math.min(line.occurrences / max * 2, .5))})` : styles.missing,
+    thickness: .5 + (line.occurrences / max) * 2
   }))
   // return addStyle({ lines, modulo }) // TODO a lot more style things
 }

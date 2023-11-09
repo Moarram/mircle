@@ -17,7 +17,6 @@ const props = defineProps<{
   width: 100%;
   display: flex;
   justify-content: flex-start;
-  box-sizing: border-box;
   background: #222;
 }
 .bar {

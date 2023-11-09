@@ -4,6 +4,7 @@ import { store } from './store';
 import TheMircle from '@/components/TheMircle.vue'
 import TheControls from './components/TheControls.vue';
 import TheLayout from './components/TheLayout.vue';
+import ProgressBar from './components/ProgressBar.vue';
 
 const mircle = ref<InstanceType<typeof TheMircle>>()
 
@@ -30,6 +31,7 @@ watch([store.layout, store.styles], () => {
     <div id="panel">
       <TheControls @render="mircle?.render" @abort="mircle?.abort" @download="mircle?.download" />
       <TheLayout />
+      <ProgressBar v-if="store.isRendering" :percent="store.renderProgress" style="max-width: 10rem; margin: .5rem;" />
     </div>
   </main>
 </template>

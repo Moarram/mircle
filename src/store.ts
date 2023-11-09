@@ -8,6 +8,7 @@ export type Store = {
   autoRender: boolean,
   isDownloading: boolean,
   isRendering: boolean,
+  renderProgress: number,
 }
 export const store = reactive({
   layout: {
@@ -17,10 +18,16 @@ export const store = reactive({
     padding: 0,
   },
   styles: {
-    lines: {},
-    background: {},
+    lines: {
+      missing: '#A044',
+    },
+    background: {
+      base: '#000',
+      circle: '#00F1'
+    },
   },
   autoRender: true,
   isDownloading: false,
   isRendering: false,
+  renderProgress: 0,
 })

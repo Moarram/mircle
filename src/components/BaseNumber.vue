@@ -14,7 +14,7 @@ const emit = defineEmits<{
   'update:modelValue': [val: number]
 }>()
 
-const digits = computed(() => `${props?.max}`.length)
+const digits = computed(() => `${Math.max(props.modelValue, props?.max || 10000)}`.length)
 
 function constrain(num: number): number {
   if (!type.isNum(num)) return 0

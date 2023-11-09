@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, ref, toRaw } from 'vue';
-import ProgressBar from '@/components/ProgressBar.vue'
 import { store } from '@/store';
 import { createMircle } from '@/mircle/mircle'
 import { delayFrames, downloadCanvas } from '@/utils';
@@ -14,26 +13,24 @@ defineExpose({
 let controller: AbortController | undefined
 let canvas: HTMLCanvasElement
 
-// TODO separate layout, style, and draw progress
-// TODO show progress bar as circle
-
 const isError = ref<boolean>()
-const progressPercent = ref<number>()
 
 async function render() {
   store.isRendering = true
+  store.renderProgress = 0
   isError.value = false
-  progressPercent.value = 0
+  await delayFrames(1) // give ui a chance to update
   controller = new AbortController()
   try {
     await createMircle({
       canvas,
       layout: toRaw(store.layout),
       styles: toRaw(store.styles),
-      onProgress: p => progressPercent.value = p,
+      onProgress: p => store.renderProgress = p,
       signal: toRaw(controller.signal)
     })
   } catch (err) {
+    console.error(err)
     isError.value = true
   }
   controller = undefined
@@ -46,7 +43,7 @@ function abort() {
 
 async function download() {
   store.isDownloading = true
-  await delayFrames(2) // give ui a chance to update
+  await delayFrames(1) // give ui a chance to update
   await downloadCanvas(canvas, `mircle${store.layout.modulo}.png`)
   store.isDownloading = false
 }
@@ -58,10 +55,7 @@ onMounted(() => {
 
 <template>
   <div id="mircle-view">
-    <canvas id="mircle" :class="{ rendering: store.isRendering || isError }" />
-    <div v-if="store.isRendering" id="progress" class="center">
-      <ProgressBar :percent="progressPercent || 0" />
-    </div>
+    <canvas id="mircle" :class="{ hide: isError }" />
     <div v-if="isError" id="err" class="center">
       <div>ERROR</div>
       <div v-if="store.layout.size > 4000">(Image is probably too large)</div>
@@ -80,14 +74,6 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   display: block;
-
-  &.rendering {
-    display: none;
-  }
-}
-
-#progress {
-  width: 20rem;
 }
 
 #err {
@@ -100,5 +86,8 @@ onMounted(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
+}
+.hide {
+  display: none;
 }
 </style>
