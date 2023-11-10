@@ -19,10 +19,12 @@ export const store = reactive({
   },
   styles: {
     lines: {
-      missing: '#A044',
+      missing: '#0000',
+      one: '#F311',
+      many: '#FA4',
     },
     background: {
-      base: '#000',
+      main: '#000',
       circle: '#00F1'
     },
   },

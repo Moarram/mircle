@@ -4,6 +4,7 @@ import { store } from './store';
 import TheMircle from '@/components/TheMircle.vue'
 import TheControls from './components/TheControls.vue';
 import TheLayout from './components/TheLayout.vue';
+import TheStyle from './components/TheStyle.vue';
 import ProgressBar from './components/ProgressBar.vue';
 
 const mircle = ref<InstanceType<typeof TheMircle>>()
@@ -24,20 +25,22 @@ watch([store.layout, store.styles], () => {
 </script>
 
 <template>
-  <main>
+  <main :style="{ background: store.styles.background.main }">
     <div id="display">
       <TheMircle ref="mircle" />
     </div>
     <div id="panel">
       <TheControls @render="mircle?.render" @abort="mircle?.abort" @download="mircle?.download" />
       <TheLayout />
-      <ProgressBar v-if="store.isRendering" :percent="store.renderProgress" style="max-width: 10rem; margin: .5rem;" />
+      <TheStyle />
+      <ProgressBar v-if="store.isRendering" :percent="store.renderProgress" style="max-width: 10rem; margin: 1.5rem;" />
     </div>
   </main>
 </template>
 
 <style scoped>
 main {
+  min-height: 100vh;
   display: flex;
   flex-flow: row wrap;
 }

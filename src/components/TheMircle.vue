@@ -77,7 +77,7 @@ onMounted(() => {
 }
 
 #err {
-  color: #F55;
+  color: #F55A;
 }
 
 .center {

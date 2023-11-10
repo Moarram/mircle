@@ -1,3 +1,4 @@
+import { scaleColor } from '@/utils'
 import type { Grouped, MircleLine, Point } from './layout'
 
 // TODO opacity + thickness based roughly on number of lines
@@ -15,7 +16,9 @@ export type StyledLine = {
 }
 
 export type LineStyleConfig = {
-  missing: string,
+  missing: string, // color
+  one: string, // color
+  many: string, // color
   //...
 }
 
@@ -29,8 +32,8 @@ export function styleMircleLines({ lines, modulo, styles }: StyleMircleArgs): St
   return lines.map(line => ({
     ...line,
     // color: '#FFF2',
-    color: line.occurrences ? `rgba(255,150,120,${Math.max(.05, Math.min(line.occurrences / max * 2, .5))})` : styles.missing,
-    thickness: .5 + (line.occurrences / max) * 2
+    color: line.occurrences ? scaleColor([styles.one, styles.many], max === 2 ? .2 : line.occurrences / max * 3) : styles.missing,
+    // thickness: .5 + (line.occurrences / max) * 2
   }))
   // return addStyle({ lines, modulo }) // TODO a lot more style things
 }

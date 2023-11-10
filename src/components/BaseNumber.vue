@@ -31,7 +31,7 @@ function onChange(event: Event) {
 </script>
 
 <template>
-  <div class="contain">
+  <div class="container">
     <BaseButton
       v-if="props.step"
       content="-"
@@ -42,6 +42,7 @@ function onChange(event: Event) {
       :style="{maxWidth: `${digits * .6}em`}"
       :value="props.modelValue"
       @change="onChange"
+      @focus="event => (event.target as HTMLInputElement).select()"
     />
     <BaseButton
       v-if="props.step"
@@ -52,7 +53,7 @@ function onChange(event: Event) {
 </template>
 
 <style scoped>
-.contain {
+.container {
   display: flex;
   flex-flow: row nowrap;
 }
