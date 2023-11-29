@@ -16,6 +16,7 @@ let canvas: HTMLCanvasElement
 const isError = ref<boolean>()
 
 async function render() {
+  if (store.isRendering) return // TODO manage initial color updates better
   store.isRendering = true
   store.renderProgress = 0
   isError.value = false
@@ -44,7 +45,9 @@ function abort() {
 async function download() {
   store.isDownloading = true
   await delayFrames(1) // give ui a chance to update
-  await downloadCanvas(canvas, `mircle${store.layout.modulo}.png`)
+  const mult = store.layout.multiple ? `x${store.layout.multiple}` : ''
+  const filename = `mircle${store.layout.modulo}${mult}.png`
+  await downloadCanvas(canvas, filename)
   store.isDownloading = false
 }
 

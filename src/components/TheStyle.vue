@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { store } from '@/store'
 import BaseColor from './BaseColor.vue'
-import { scaleColor } from '@/utils'
 import { computed } from 'vue'
-import { TinyColor } from '@ctrl/tinycolor'
+import { Colorful } from '@moarram/util';
 
-const circle = computed(() => new TinyColor(store.styles.background.circle).onBackground(store.styles.background.main).toHex8String())
-const missing = computed(() => new TinyColor(store.styles.lines.missing).onBackground(circle.value).toHex8String())
-const one = computed(() => new TinyColor(store.styles.lines.one).onBackground(circle.value).toHex8String())
-const many = computed(() => new TinyColor(store.styles.lines.many).onBackground(circle.value).toHex8String())
-
+const circle = computed(() => new Colorful(store.styles.background.circle).on(store.styles.background.main).toString())
+const missing = computed(() => new Colorful(store.styles.lines.missing).on(circle.value).toString())
+const one = computed(() => new Colorful(store.styles.lines.one).on(circle.value).toString())
+const many = computed(() => new Colorful(store.styles.lines.many).on(circle.value).toString())
 
 </script>
 
@@ -42,7 +40,7 @@ const many = computed(() => new TinyColor(store.styles.lines.many).onBackground(
       <div
         v-for="(percent, i) of [.1, .2, .3, .4, .5, .6, .7, .8, .9]"
         :key="i"
-        :style="{ background: scaleColor([one, many], percent) }"
+        :style="{ background: Colorful.scale([one, many], percent).toString() }"
         class="swatch"
       ></div>
     </div>

@@ -1,15 +1,7 @@
 <script setup lang="ts">
-import { type } from '@moarram/util'
 import { computed, onMounted, ref, watch } from 'vue'
-import { TinyColor } from '@ctrl/tinycolor'
+import { Colorful } from '@moarram/util'
 import BaseColorSlider from './BaseColorSlider.vue';
-
-type RGBA = {
-  r: number,
-  g: number,
-  b: number,
-  a: number,
-}
 
 const props = defineProps<{
   modelValue: string,
@@ -20,17 +12,16 @@ const emit = defineEmits<{
   'update:modelValue': [val: string]
 }>()
 
-const color = computed(() => new TinyColor(props.modelValue).toRgb())
+const color = computed(() => new Colorful(props.modelValue).toString())
 const textColor = computed(() => {
   const background = props.onLight ? '#FFF' : '#000'
-  const tc = new TinyColor(color.value)
-  const applied = tc.onBackground(background)
+  const foreground = new Colorful(color.value)
+  const applied = foreground.on(background)
   return applied.isDark() ? '#FFFA' : '#000'
 })
 
 function colorStr(color: any) {
-  const tc = new TinyColor(color)
-  return (tc.getAlpha() === 1 ? tc.toHexString(true) : tc.toHex8String(true)).toUpperCase()
+  return new Colorful(color).toString()
 }
 
 function onChange(event: Event) {
