@@ -16,8 +16,9 @@ export function initCanvas({ canvas, size }: InitCanvasArgs): CanvasRenderingCon
 }
 
 export type BackgroundStyleConfig = {
-  main: string,
-  circle: string,
+  main: string, // color of canvas background
+  circle: string, // color of mircle background, or center of circle gradient
+  circle2?: string, // color of outside of circle gradient
 }
 
 export type DrawMircleBackgroundArgs = {
@@ -28,7 +29,15 @@ export type DrawMircleBackgroundArgs = {
 }
 export function drawMircleBackground({ ctx, size, padding, styles }: DrawMircleBackgroundArgs) {
   draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: styles.main })
-  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1, color: styles.circle })
+  if (styles.circle2) {
+    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2 - padding - 1)
+    gradient.addColorStop(0, styles.circle)
+    gradient.addColorStop(1, styles.circle2)
+    ctx.fillStyle = gradient
+  } else {
+    ctx.fillStyle = styles.circle
+  }
+  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1 })
 }
 
 export type DrawMircleLinesArgs = {
@@ -42,6 +51,30 @@ export function drawMircleLines({ ctx, lines, onProgress }: DrawMircleLinesArgs)
     onProgress && i % 100 === 0 && onProgress({ current: i, total: lines.length })
   }
   onProgress && onProgress({ current: lines.length, total: lines.length })
+}
+
+export type InvertMircleArgs = {
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  size: number,
+  padding: number,
+}
+export function invertMircle({ ctx, size, padding }: InvertMircleArgs) {
+  ctx.globalCompositeOperation = 'difference'
+  draw.circle({
+    ctx,
+    pos: { x: 0, y: 0 },
+    r: size / 2 - padding - 1,
+    color: '#FFF'
+  })
+  ctx.globalCompositeOperation = 'source-over'
+  draw.circle({
+    ctx,
+    pos: { x: 0, y: 0 },
+    r: size / 2 - padding,
+    thickness: 4,
+    fill: false,
+    color: '#000' // we assume a black background
+  })
 }
 
 export function isOffscreenCanvas(canvas: HTMLCanvasElement | OffscreenCanvas): canvas is OffscreenCanvas {

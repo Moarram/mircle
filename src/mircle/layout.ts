@@ -38,10 +38,12 @@ export function layoutMircle({ modulo, multiple, size, padding=0 }: LayoutMircle
   }
   const groupedConnections = groupConnections({ connections, modulo, includeMissing: true })
   const radius = (size - padding * 2) / 2
-  return groupedConnections.map(connection => ({
+  const groupedLines = groupedConnections.map(connection => ({
     ...connection,
     ...computeLine({ connection, modulo, radius }),
   }))
+
+  return groupedLines //.sort((a, b) => math.distance(a.pos, a.pos2) - math.distance(b.pos, b.pos2))
 }
 
 type ComputeConnectionsArgs = {

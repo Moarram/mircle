@@ -28,7 +28,7 @@ const emit = defineEmits<{
     <div>
       <BaseCheckbox
         id="auto-render"
-        v-model="store.autoRender"
+        v-model="store.options.autoRender"
       />
       <label for="auto-render">
         Auto-render

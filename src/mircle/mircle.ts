@@ -1,8 +1,9 @@
 import { layoutMircle, type LayoutMircleArgs } from './layout'
 import { styleMircleLines, type LineStyleConfig } from './style'
-import { initCanvas, drawMircleBackground, drawMircleLines, type BackgroundStyleConfig } from './draw'
+import { initCanvas, drawMircleBackground, drawMircleLines, type BackgroundStyleConfig, invertMircle } from './draw'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { delayFrames } from '@/utils'
+import { Colorful } from '@moarram/util'
 
 export type StyleMircleConfig = {
   lines: LineStyleConfig,
@@ -13,11 +14,12 @@ export type CreateMircleArgs = {
   canvas: HTMLCanvasElement,
   layout: LayoutMircleArgs,
   styles: StyleMircleConfig,
+  invert?: boolean,
   onProgress?: (progressPercent: number) => void,
   signal?: AbortSignal,
 }
-export async function createMircle({ canvas, layout, styles, onProgress, signal }: CreateMircleArgs) {
-  const bitmap = await renderMircleWithWorker({ layout, styles, onProgress, signal })
+export async function createMircle({ canvas, layout, styles, invert, onProgress, signal }: CreateMircleArgs) {
+  const bitmap = await renderMircleWithWorker({ layout, styles, invert, onProgress, signal })
   if (!bitmap) return // aborted
 
   await delayFrames(2) // give ui a chance to update
@@ -35,6 +37,7 @@ export async function createMircle({ canvas, layout, styles, onProgress, signal 
 export type RenderMircleWithWorkerArgs = {
   layout: LayoutMircleArgs,
   styles: StyleMircleConfig,
+  invert?: boolean,
   onProgress?: (progressPercent: number) => void,
   signal?: AbortSignal,
 }
@@ -76,9 +79,10 @@ export type RenderMircleArgs = {
   canvas: HTMLCanvasElement | OffscreenCanvas, // destination canvas
   layout: LayoutMircleArgs,
   styles: StyleMircleConfig,
+  invert?: boolean,
   onProgress?: (progressPercent: number) => void,
 }
-export function renderMircle({ canvas, layout: { modulo, multiple, padding=0, size }, styles: { lines, background }, onProgress }: RenderMircleArgs) {
+export function renderMircle({ canvas, layout: { modulo, multiple, padding=0, size }, styles: { lines, background }, invert=false, onProgress }: RenderMircleArgs) {
   console.debug('Computing layout...')
   const mircleLines = layoutMircle({
     modulo,
@@ -91,18 +95,29 @@ export function renderMircle({ canvas, layout: { modulo, multiple, padding=0, si
   const styledLines = styleMircleLines({
     modulo,
     lines: mircleLines,
-    styles: lines
+    styles: invert ? {
+      ...lines,
+      missing: new Colorful(lines.missing).invert().hex,
+      one: new Colorful(lines.one).invert().hex,
+      many: new Colorful(lines.many).invert().hex,
+      short: new Colorful(lines.short).invert().hex,
+    } : lines
   })
 
   console.debug('Preparing canvas...')
   const ctx = initCanvas({ canvas, size })
+  ctx.globalCompositeOperation = 'lighter'
 
   console.debug('Drawing background...')
   drawMircleBackground({
     ctx,
     size,
     padding,
-    styles: background,
+    styles: invert ? {
+      ...background,
+      circle: new Colorful(background.circle).invert().hex,
+      ...(background.circle2 ? { circle2: new Colorful(background.circle2).invert().hex } : {}),
+    } : background,
   })
 
   console.debug('Drawing lines...')
@@ -111,4 +126,13 @@ export function renderMircle({ canvas, layout: { modulo, multiple, padding=0, si
     lines: styledLines,
     onProgress: progress => onProgress && onProgress(progress.current / progress.total),
   })
+
+  if (invert) {
+    console.debug('Inverting...')
+    invertMircle({
+      ctx,
+      size,
+      padding,
+    })
+  }
 }

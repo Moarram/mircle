@@ -27,6 +27,7 @@ async function render() {
       canvas,
       layout: toRaw(store.layout),
       styles: toRaw(store.styles),
+      invert: store.options.invert,
       onProgress: p => store.renderProgress = p,
       signal: toRaw(controller.signal)
     })
@@ -36,6 +37,9 @@ async function render() {
   }
   controller = undefined
   store.isRendering = false
+  // await delayFrames(60)
+  // store.layout.modulo += 1
+  // render()
 }
 
 function abort() {

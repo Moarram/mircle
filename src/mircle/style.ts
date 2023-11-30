@@ -1,4 +1,4 @@
-import { Colorful } from '@moarram/util'
+import { Colorful, math } from '@moarram/util'
 import type { Grouped, MircleLine, Point } from './layout'
 
 // TODO opacity + thickness based roughly on number of lines
@@ -16,9 +16,12 @@ export type StyledLine = {
 }
 
 export type LineStyleConfig = {
-  missing: string, // color
-  one: string, // color
-  many: string, // color
+  missing: string, // color of missing lines
+  one: string, // color of lines with fewest occurrences
+  many: string, // color of lines with most occurrences
+  short: string, // color of short lines
+  minWidth: number, // width of lines with fewest occurences
+  maxWidth: number, // width of lines with most occurrences
   //...
 }
 
@@ -28,13 +31,23 @@ export type StyleMircleArgs = {
   styles: LineStyleConfig,
 }
 export function styleMircleLines({ lines, modulo, styles }: StyleMircleArgs): StyledLine[] {
-  const max = lines.reduce((acc, line) => Math.max(line.occurrences, acc), 0)
-  return lines.map(line => ({
-    ...line,
-    // color: '#FFF2',
-    color: line.occurrences ? Colorful.scale([styles.one, styles.many], max === 2 ? .2 : line.occurrences / max * 3).toString() : styles.missing,
-    // thickness: .5 + (line.occurrences / max) * 2
-  }))
+  const occurrenceMax = lines.reduce((acc, line) => Math.max(line.occurrences, acc), 0)
+  const distanceMax = lines.reduce((acc, line) => Math.max(math.distance(line.pos, line.pos2), acc), 0)
+
+  return lines.map(line => {
+    const occurrencePercent = math.clamp(occurrenceMax === 2 ? .2 : line.occurrences / occurrenceMax * 3, 0 ,1)
+    const occurrenceColor = line.occurrences ? Colorful.scale([styles.one, styles.many], occurrencePercent).toString() : styles.missing
+
+    const distancePercent = math.distance(line.pos, line.pos2) / distanceMax
+    const distanceColor = Colorful.scale([styles.short, occurrenceColor], distancePercent).toString()
+
+    return {
+      ...line,
+      // color: '#FFF2',
+      color: distanceColor,
+      thickness: styles.minWidth + occurrencePercent * (styles.maxWidth - styles.minWidth),
+    }
+  })
   // return addStyle({ lines, modulo }) // TODO a lot more style things
 }
 

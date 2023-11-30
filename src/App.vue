@@ -16,8 +16,8 @@ onMounted(() => {
   mircle.value?.render()
 })
 
-watch([store.layout, store.styles], () => {
-  if (store.autoRender) {
+watch([store.layout, store.styles, store.options], () => {
+  if (store.options.autoRender) {
     if (store.isRendering) mircle.value?.abort()
     if (!store.isDownloading) mircle.value?.render()
   }
