@@ -21,6 +21,9 @@ export type Grouped<T> = T & {
   occurrences: number,
 }
 
+// TODO allow non-integer modulo
+// TODO specify radius sooner
+
 export type LayoutMircleArgs = {
   modulo: number, // number of points around the circle
   multiple?: number, // mutliplier for modulo to find second points, otherwise all

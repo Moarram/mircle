@@ -36,6 +36,8 @@ function onChange(event: Event) {
       v-if="props.step"
       content="-"
       @click="emit('update:modelValue', constrain(props.modelValue - props.step))"
+      :disabled="props.min !== undefined && props.modelValue <= props.min"
+      :square-right="true"
     />
     <input
       type="number"
@@ -48,6 +50,8 @@ function onChange(event: Event) {
       v-if="props.step"
       content="+"
       @click="emit('update:modelValue', constrain(props.modelValue + props.step))"
+      :disabled="props.max !== undefined && props.modelValue >= props.max"
+      :square-left="true"
     />
   </div>
 </template>
@@ -56,8 +60,10 @@ function onChange(event: Event) {
 .container {
   display: flex;
   flex-flow: row nowrap;
+  align-items: stretch;
 }
 input {
+  margin-top: 2px;
   -webkit-appearance: textfield;
   -moz-appearance: textfield;
   appearance: textfield;

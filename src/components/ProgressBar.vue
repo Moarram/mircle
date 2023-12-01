@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 const props = defineProps<{
-  percent: number, // from 0 to 1
+  percent: number, // in range [0..1]
 }>()
 
 </script>

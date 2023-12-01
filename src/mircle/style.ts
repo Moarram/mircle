@@ -9,8 +9,7 @@ import type { Grouped, MircleLine, Point } from './layout'
 export type StyledLine = {
   pos: Point, // start position
   pos2: Point, // end position
-  color: string,
-  color2?: string, // optional for gradient
+  color: string | string[], // array for gradient
   opacity?: number, // alpha channel [0..1]
   thickness?: number, // width of line
 }
@@ -28,9 +27,42 @@ export type LineStyleConfig = {
 export type StyleMircleArgs = {
   lines: Grouped<MircleLine>[],
   modulo: number,
-  styles: LineStyleConfig,
+  // styles: LineStyleConfig,
 }
-export function styleMircleLines({ lines, modulo, styles }: StyleMircleArgs): StyledLine[] {
+export function styleMircleLines({ lines, modulo }: StyleMircleArgs): StyledLine[] {
+  // TODO figure out how to style
+  const styles: LineStyleConfig = {
+    missing: '#F352',
+    one: '#D31',
+    many: '#FA0',
+    short: '#00F',
+    minWidth: 1,
+    maxWidth: 3,
+  }
+
+  const distance = lines.reduce((acc, line) => {
+    const distance = math.distance(line.pos, line.pos2)
+    return {
+      total: acc.total + distance,
+      max: Math.max(acc.max, distance)
+    }
+  }, { total: 0, max: 0 })
+
+  const size = lines.reduce((acc, line) => ({
+    xMin: Math.min(acc.xMin, line.pos.x, line.pos2.x),
+    yMin: Math.min(acc.yMin, line.pos.y, line.pos2.y),
+    xMax: Math.max(acc.xMax, line.pos.x, line.pos2.x),
+    yMax: Math.max(acc.yMax, line.pos.y, line.pos2.y),
+  }), { xMin: 0, yMin: 0, xMax: 0, yMax: 0 })
+
+  // TODO pass radius to function instead of guessing
+  const radius = Math.max(size.xMax - size.xMin, size.yMax - size.yMin)
+  const area = Math.PI * radius * radius
+  const density = distance.total / area
+
+  styles.minWidth = .1 / density
+  styles.maxWidth = .5 / density
+
   const occurrenceMax = lines.reduce((acc, line) => Math.max(line.occurrences, acc), 0)
   const distanceMax = lines.reduce((acc, line) => Math.max(math.distance(line.pos, line.pos2), acc), 0)
 
@@ -41,10 +73,12 @@ export function styleMircleLines({ lines, modulo, styles }: StyleMircleArgs): St
     const distancePercent = math.distance(line.pos, line.pos2) / distanceMax
     const distanceColor = Colorful.scale([styles.short, occurrenceColor], distancePercent).toString()
 
+    const gradient = ['#D030', distanceColor, '#D030']
+
     return {
       ...line,
       // color: '#FFF2',
-      color: distanceColor,
+      color: gradient,
       thickness: styles.minWidth + occurrencePercent * (styles.maxWidth - styles.minWidth),
     }
   })

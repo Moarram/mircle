@@ -4,7 +4,7 @@ import { store } from './store';
 import TheMircle from '@/components/TheMircle.vue'
 import TheControls from './components/TheControls.vue';
 import TheLayout from './components/TheLayout.vue';
-import TheStyle from './components/TheStyle.vue';
+// import TheStyle from './components/TheStyle.vue';
 import ProgressBar from './components/ProgressBar.vue';
 
 const mircle = ref<InstanceType<typeof TheMircle>>()
@@ -13,7 +13,7 @@ onMounted(() => {
   const ratio = window.devicePixelRatio || 1
   const size = Math.min(window.innerWidth, window.innerHeight) * ratio
   store.layout.size = size - 20 * ratio
-  mircle.value?.render()
+  // if (!store.isRendering) mircle.value?.render()
 })
 
 watch([store.layout, store.styles, store.options], () => {
@@ -25,14 +25,14 @@ watch([store.layout, store.styles, store.options], () => {
 </script>
 
 <template>
-  <main :style="{ background: store.styles.background.main }">
+  <main>
     <div id="display">
       <TheMircle ref="mircle" />
     </div>
     <div id="panel">
       <TheControls @render="mircle?.render" @abort="mircle?.abort" @download="mircle?.download" />
       <TheLayout />
-      <TheStyle />
+      <!-- <TheStyle /> -->
       <ProgressBar v-if="store.isRendering" :percent="store.renderProgress" style="max-width: 10rem; margin: 1.5rem;" />
     </div>
   </main>
@@ -43,6 +43,8 @@ main {
   min-height: 100vh;
   display: flex;
   flex-flow: row wrap;
+  align-content: flex-start;
+  background: #000;
 }
 #display {
   width: calc(min(100vw, 100vh) - 20px);

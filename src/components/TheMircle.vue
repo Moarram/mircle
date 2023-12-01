@@ -15,18 +15,23 @@ let canvas: HTMLCanvasElement
 
 const isError = ref<boolean>()
 
+// TODO cancel render when modules update
+// TODO manage initial color updates better
+// TODO less settings on screen, figure it out here first
+
 async function render() {
-  if (store.isRendering) return // TODO manage initial color updates better
   store.isRendering = true
   store.renderProgress = 0
   isError.value = false
+
   await delayFrames(1) // give ui a chance to update
   controller = new AbortController()
+
   try {
     await createMircle({
       canvas,
       layout: toRaw(store.layout),
-      styles: toRaw(store.styles),
+      // styles: toRaw(store.styles),
       invert: store.options.invert,
       onProgress: p => store.renderProgress = p,
       signal: toRaw(controller.signal)
@@ -35,8 +40,10 @@ async function render() {
     console.error(err)
     isError.value = true
   }
+
   controller = undefined
   store.isRendering = false
+
   // await delayFrames(60)
   // store.layout.modulo += 1
   // render()

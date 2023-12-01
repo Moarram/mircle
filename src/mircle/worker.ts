@@ -5,7 +5,7 @@ export type WorkerRequest = WorkerRenderRequest
 type WorkerRenderRequest = {
   action: 'render',
   layout: LayoutMircleArgs,
-  styles: StyleMircleConfig,
+  // styles: StyleMircleConfig,
 }
 
 export type WorkerResponse = WorkerProgressResponse | WorkerFinishedResponse

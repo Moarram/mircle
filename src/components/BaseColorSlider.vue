@@ -3,7 +3,7 @@ import { math } from '@moarram/util'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps<{
-  percent: number, // amount along slider (0 to 1)
+  percent: number, // amount along slider in range [0..1]
   colors: string[], // colors used to create gradient
   height: number,
   width: number,

@@ -19,18 +19,18 @@ export const store = reactive({
     padding: 0,
   },
   styles: {
-    lines: {
-      missing: '#F352',
-      one: '#D312',
-      many: '#F50',
-      short: '#0008',
-      minWidth: 1,
-      maxWidth: 3,
-    },
     background: {
-      main: '#000',
-      circle: '#D508',
-      circle2: '#104',
+      // main: '#000',
+      // circle: '#D505',
+      // circle2: '#104',
+    },
+    lines: {
+      // missing: '#F352',
+      // one: '#D312',
+      // many: '#F50',
+      // short: '#0008',
+      // minWidth: 1,
+      // maxWidth: 3,
     },
   },
   options: {

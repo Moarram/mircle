@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { Colorful } from '@moarram/util'
 import BaseColorSlider from './BaseColorSlider.vue';
 

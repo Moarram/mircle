@@ -25,18 +25,16 @@ export type DrawMircleBackgroundArgs = {
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   size: number,
   padding: number,
-  styles: BackgroundStyleConfig,
+  // styles: BackgroundStyleConfig,
 }
-export function drawMircleBackground({ ctx, size, padding, styles }: DrawMircleBackgroundArgs) {
-  draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: styles.main })
-  if (styles.circle2) {
-    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2 - padding - 1)
-    gradient.addColorStop(0, styles.circle)
-    gradient.addColorStop(1, styles.circle2)
-    ctx.fillStyle = gradient
-  } else {
-    ctx.fillStyle = styles.circle
-  }
+export function drawMircleBackground({ ctx, size, padding }: DrawMircleBackgroundArgs) {
+  draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: '#000' })
+  const colors = ['#C31', '#104']
+  const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2 - padding - 1)
+  colors.forEach((color, i) => {
+    gradient.addColorStop(i / (colors.length - 1), color)
+  })
+  ctx.fillStyle = gradient
   draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1 })
 }
 
@@ -47,7 +45,17 @@ export type DrawMircleLinesArgs = {
 }
 export function drawMircleLines({ ctx, lines, onProgress }: DrawMircleLinesArgs) {
   for (const [i, line] of lines.entries()) { // supposedly for..of performs better than forEach
-    draw.line({ ctx, ...line })
+    if (Array.isArray(line.color)) {
+      const gradient = ctx.createLinearGradient(line.pos.x, line.pos.y, line.pos2.x, line.pos2.y)
+      line.color.forEach((color, i) => {
+        gradient.addColorStop(i / (line.color.length - 1), color)
+      })
+      ctx.strokeStyle = gradient
+    } else {
+      ctx.strokeStyle = line.color
+    }
+    // for (let i = 0; i < 5; i++) draw.line({ ctx, ...line, color: undefined })
+    draw.line({ ctx, ...line, color: undefined })
     onProgress && i % 100 === 0 && onProgress({ current: i, total: lines.length })
   }
   onProgress && onProgress({ current: lines.length, total: lines.length })

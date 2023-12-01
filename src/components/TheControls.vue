@@ -34,6 +34,15 @@ const emit = defineEmits<{
         Auto-render
       </label>
     </div>
+    <div style="padding-left: .5rem">
+      <BaseCheckbox
+        id="invert"
+        v-model="store.options.invert"
+      />
+      <label for="invert">
+        Invert
+      </label>
+    </div>
   </div>
 </template>
 

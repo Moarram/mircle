@@ -24,10 +24,10 @@ const lines = computed(() => store.layout.multiple ? store.layout.modulo : (stor
       <div>px</div>
     </div>
     <div style="margin-left: 1rem;">
-      <BaseButton content="small" @click="store.layout.size = 1000" />
-      <BaseButton content="medium" @click="store.layout.size = 2000" />
-      <BaseButton content="large" @click="store.layout.size = 4000" />
-      <BaseButton content="huge" @click="store.layout.size = 10000" style="color: #B00" />
+      <BaseButton content="small" @click="store.layout.size = 1000" :engaged="store.layout.size === 1000" :square-right="true" />
+      <BaseButton content="medium" @click="store.layout.size = 2000" :engaged="store.layout.size === 2000" :square-right="true" :square-left="true" />
+      <BaseButton content="large" @click="store.layout.size = 4000" :engaged="store.layout.size === 4000" :square-right="true" :square-left="true" />
+      <BaseButton content="huge" @click="store.layout.size = 10000" :engaged="store.layout.size === 10000" :square-left="true" style="color: #B00" />
     </div>
     <div class="param" style="margin-top: 1rem;">
       <label for="modulo">Points:</label>
