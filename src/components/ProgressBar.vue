@@ -17,10 +17,12 @@ const props = defineProps<{
   width: 100%;
   display: flex;
   justify-content: flex-start;
-  background: #222;
+  background: #111;
+  border-radius: 3px;
 }
 .bar {
   height: 1rem;
   background: #DDD;
+  border-radius: 3px;
 }
 </style>

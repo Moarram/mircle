@@ -32,10 +32,10 @@ export type StyleMircleArgs = {
 export function styleMircleLines({ lines, modulo }: StyleMircleArgs): StyledLine[] {
   // TODO figure out how to style
   const styles: LineStyleConfig = {
-    missing: '#F352',
-    one: '#D31',
-    many: '#FA0',
-    short: '#00F',
+    missing: '#1F84',
+    one: '#1F88',
+    many: '#DF5',
+    short: '#5FA',
     minWidth: 1,
     maxWidth: 3,
   }
@@ -60,20 +60,21 @@ export function styleMircleLines({ lines, modulo }: StyleMircleArgs): StyledLine
   const area = Math.PI * radius * radius
   const density = distance.total / area
 
-  styles.minWidth = .1 / density
-  styles.maxWidth = .5 / density
+  styles.minWidth = math.clamp(.1 / density, .01, 1)
+  styles.maxWidth = math.clamp(3 / density, 2, radius / 100)
 
   const occurrenceMax = lines.reduce((acc, line) => Math.max(line.occurrences, acc), 0)
+  const occurrenceMin = lines.reduce((acc, line) => Math.min(line.occurrences, acc), 0)
   const distanceMax = lines.reduce((acc, line) => Math.max(math.distance(line.pos, line.pos2), acc), 0)
 
   return lines.map(line => {
-    const occurrencePercent = math.clamp(occurrenceMax === 2 ? .2 : line.occurrences / occurrenceMax * 3, 0 ,1)
+    const occurrencePercent = math.clamp(occurrenceMax === 2 ? .1 : line.occurrences / occurrenceMax * 2, 0 ,1)
     const occurrenceColor = line.occurrences ? Colorful.scale([styles.one, styles.many], occurrencePercent).toString() : styles.missing
 
     const distancePercent = math.distance(line.pos, line.pos2) / distanceMax
     const distanceColor = Colorful.scale([styles.short, occurrenceColor], distancePercent).toString()
 
-    const gradient = ['#D030', distanceColor, '#D030']
+    const gradient = [styles.short, distanceColor, distanceColor, styles.short]
 
     return {
       ...line,

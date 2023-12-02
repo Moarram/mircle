@@ -1,4 +1,4 @@
-import { draw } from '@moarram/util'
+import { draw, math } from '@moarram/util'
 import type { StyledLine } from './style'
 import type { Progress } from '../types'
 
@@ -29,7 +29,9 @@ export type DrawMircleBackgroundArgs = {
 }
 export function drawMircleBackground({ ctx, size, padding }: DrawMircleBackgroundArgs) {
   draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: '#000' })
-  const colors = ['#C31', '#104']
+  // const colors = ['#C31', '#003']
+  // const colors = ['#FDA', '#F50C', '#A018', '#0035']
+  const colors = ['#DD8', '#048', '#000'].reverse()
   const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2 - padding - 1)
   colors.forEach((color, i) => {
     gradient.addColorStop(i / (colors.length - 1), color)
@@ -54,7 +56,9 @@ export function drawMircleLines({ ctx, lines, onProgress }: DrawMircleLinesArgs)
     } else {
       ctx.strokeStyle = line.color
     }
+    // TODO bug in Safari... gradient incompatible with line width other than 1
     // for (let i = 0; i < 5; i++) draw.line({ ctx, ...line, color: undefined })
+    // draw.line({ ctx, pos: line.pos, pos2: line.pos2, thickness: 1 })
     draw.line({ ctx, ...line, color: undefined })
     onProgress && i % 100 === 0 && onProgress({ current: i, total: lines.length })
   }
@@ -78,8 +82,8 @@ export function invertMircle({ ctx, size, padding }: InvertMircleArgs) {
   draw.circle({
     ctx,
     pos: { x: 0, y: 0 },
-    r: size / 2 - padding,
-    thickness: 4,
+    r: size / 2 - padding + 30,
+    thickness: 64, // extra thicc
     fill: false,
     color: '#000' // we assume a black background
   })

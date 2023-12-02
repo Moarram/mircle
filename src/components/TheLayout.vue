@@ -14,37 +14,36 @@ const lines = computed(() => store.layout.multiple ? store.layout.modulo : (stor
   <div id="layout">
     <div class="param">
       <label for="size">Size:</label>
+      <div>
+        <BaseButton content="small" @click="store.layout.size = 1000" :engaged="store.layout.size === 1000" :square-right="true" />
+        <BaseButton content="medium" @click="store.layout.size = 2000" :engaged="store.layout.size === 2000" :square-right="true" :square-left="true" />
+        <BaseButton content="large" @click="store.layout.size = 4000" :engaged="store.layout.size === 4000" :square-right="true" :square-left="true" />
+        <BaseButton content="huge" @click="store.layout.size = 10000" :engaged="store.layout.size === 10000" :square-left="true" style="color: #B00" />
+      </div>
       <BaseNumber
         id="size"
         v-model="store.layout.size"
-        class="num"
         :min="0"
         :max="20000"
+        style="margin-left: 1em;"
       />
-      <div>px</div>
+      <div style="padding-left: .3em;">px</div>
     </div>
-    <div style="margin-left: 1rem;">
-      <BaseButton content="small" @click="store.layout.size = 1000" :engaged="store.layout.size === 1000" :square-right="true" />
-      <BaseButton content="medium" @click="store.layout.size = 2000" :engaged="store.layout.size === 2000" :square-right="true" :square-left="true" />
-      <BaseButton content="large" @click="store.layout.size = 4000" :engaged="store.layout.size === 4000" :square-right="true" :square-left="true" />
-      <BaseButton content="huge" @click="store.layout.size = 10000" :engaged="store.layout.size === 10000" :square-left="true" style="color: #B00" />
-    </div>
-    <div class="param" style="margin-top: 1rem;">
+    <div class="param" style="margin-top: 1rem; max-width: 100%;">
       <label for="modulo">Points:</label>
       <BaseNumber
         id="modulo"
         v-model="store.layout.modulo"
-        class="num"
         :min="0"
         :max="999"
         :step="1"
       />
-    </div>
-    <div class="detail">
-      Factors: {{ factors.join('×') }}
-    </div>
-    <div class="detail">
-      Lines: {{ lines }}
+      <div class="detail">
+        {{ factors.length > 1 ? factors.join('&#8203;×') : '' }}
+      </div>
+      <!-- <div class="detail">
+        ({{ lines }}&nbsp;lines)
+      </div> -->
     </div>
   </div>
 </template>
@@ -55,18 +54,14 @@ const lines = computed(() => store.layout.multiple ? store.layout.modulo : (stor
 }
 .param {
   display: flex;
-  flex-flow: row nowrap;
+  flex-flow: row wrap;
   align-items: center;
 }
 label {
   margin-right: .5rem;
 }
-.num {
-  margin: .2rem;
-}
 .detail {
-  margin-left: 1rem;
-  margin-bottom: .2rem;
+  margin-left: .7rem;
   color: #DDD8;
 }
 </style>

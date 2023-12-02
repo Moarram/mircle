@@ -14,7 +14,7 @@ const emit = defineEmits<{
   'update:modelValue': [val: number]
 }>()
 
-const digits = computed(() => `${Math.max(props.modelValue, (props?.max || 10000) + (props?.step || 0 ))}`.length)
+const digits = computed(() => `${Math.max(props.modelValue, (props?.max || 10000) - (props?.step || 0 ))}`.length)
 
 function constrain(num: number): number {
   if (!type.isNum(num)) return 0
@@ -41,7 +41,7 @@ function onChange(event: Event) {
     />
     <input
       type="number"
-      :style="{maxWidth: `${digits * .6}em`}"
+      :style="{maxWidth: `${digits * .62}em`}"
       :value="props.modelValue"
       @change="onChange"
       @focus="event => (event.target as HTMLInputElement).select()"
@@ -69,6 +69,7 @@ input {
   appearance: textfield;
   font-family: inherit;
   font-size: inherit;
+  color: #000D;
 
   &::-webkit-inner-spin-button,
   &::-webkit-outer-spin-button {

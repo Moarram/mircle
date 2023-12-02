@@ -8,6 +8,7 @@ const props = defineProps<{
   engaged?: boolean,
   squareLeft?: boolean,
   squareRight?: boolean,
+  large?: boolean,
 }>()
 
 const emit = defineEmits<{
@@ -32,6 +33,9 @@ const emit = defineEmits<{
         borderTopRightRadius: 0,
         borderBottomRightRadius: 0,
       }),
+      ...(large && {
+        padding: `.5em 1em`,
+      })
     }"
   />
 </template>
@@ -43,7 +47,7 @@ input[type="button"] {
   padding: .2em .5em;
   font-family: inherit;
   font-size: inherit;
-  color: #000;
+  color: #000D;
   background: #FFFC;
   border: none;
   border-right: 1px solid #0004;

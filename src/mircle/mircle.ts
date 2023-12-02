@@ -57,6 +57,8 @@ export async function renderMircleWithWorker({ onProgress, signal, ...args }: Re
       }
     }
     worker.onerror = (event: ErrorEvent) => {
+      worker?.terminate()
+      worker = undefined
       reject(event)
     }
 

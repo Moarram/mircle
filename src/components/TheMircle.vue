@@ -15,9 +15,9 @@ let canvas: HTMLCanvasElement
 
 const isError = ref<boolean>()
 
-// TODO cancel render when modules update
+// TODO re-render properly when modules update
+// TODO track down abord/render bugs... very bad in Safari
 // TODO manage initial color updates better
-// TODO less settings on screen, figure it out here first
 
 async function render() {
   store.isRendering = true
@@ -44,7 +44,7 @@ async function render() {
   controller = undefined
   store.isRendering = false
 
-  // await delayFrames(60)
+  // await delayFrames(1)
   // store.layout.modulo += 1
   // render()
 }
@@ -80,18 +80,23 @@ onMounted(() => {
 <style>
 #mircle-view {
   height: 100%;
-  width: 100%;
+  margin: auto;
   position: relative;
+  aspect-ratio: 1;
 }
 
 #mircle {
   width: 100%;
   height: 100%;
   display: block;
+
+  &.hide {
+    display: none;
+  }
 }
 
 #err {
-  color: #F55A;
+  color: #F55;
 }
 
 .center {
@@ -100,8 +105,5 @@ onMounted(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-}
-.hide {
-  display: none;
 }
 </style>

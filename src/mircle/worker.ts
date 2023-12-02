@@ -25,6 +25,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
       canvas,
       onProgress: progressPercent => self.postMessage({ progressPercent })
     })
+    console.log('Generating bitmap...')
     const bitmap = canvas.transferToImageBitmap()
     self.postMessage({ result: bitmap }, [bitmap]) // transfer bitmap to main thread
   }

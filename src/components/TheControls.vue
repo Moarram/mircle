@@ -17,42 +17,45 @@ const emit = defineEmits<{
       @click="store.isRendering ? emit('abort') : emit('render')"
       :disabled="store.isDownloading"
       :content="store.isRendering ? 'Cancel' : 'Render'"
-      class="btn"
+      :style="store.isRendering ? 'color: #B00' : ''"
+      :large="true"
+      class="ctrl"
     />
     <BaseButton
       @click="emit('download')"
       :disabled="store.isRendering || store.isDownloading"
+      :large="true"
+      class="ctrl"
       content="Download"
-      class="btn"
     />
-    <div>
+    <div class="ctrl">
       <BaseCheckbox
         id="auto-render"
         v-model="store.options.autoRender"
       />
-      <label for="auto-render">
-        Auto-render
-      </label>
+      <label for="auto-render">Auto-render</label>
     </div>
-    <div style="padding-left: .5rem">
+    <div class="ctrl">
       <BaseCheckbox
         id="invert"
         v-model="store.options.invert"
       />
-      <label for="invert">
-        Invert
-      </label>
+      <label for="invert">Invert</label>
     </div>
   </div>
 </template>
 
 <style scoped>
 #controls {
+  margin-right: -.5rem;
+  margin-bottom: -.5rem;
   padding: .5rem;
   display: flex;
   flex-flow: row wrap;
+  align-items: center;
 }
-.btn {
+.ctrl {
   margin-right: .5rem;
+  margin-bottom: .5rem;
 }
 </style>
