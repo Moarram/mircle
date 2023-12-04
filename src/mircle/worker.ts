@@ -1,10 +1,9 @@
-import { renderMircle, type StyleMircleConfig } from "./mircle"
-import type { LayoutMircleArgs } from "./layout"
+import { renderMircle, type MircleSpecification } from "./mircle"
 
 export type WorkerRequest = WorkerRenderRequest
 type WorkerRenderRequest = {
   action: 'render',
-  layout: LayoutMircleArgs,
+  specification: MircleSpecification,
   // styles: StyleMircleConfig,
 }
 
@@ -19,13 +18,13 @@ type WorkerFinishedResponse = {
 self.onmessage = (event: MessageEvent<WorkerRequest>) => {
   const request = event.data
   if (request.action === 'render') {
-    const canvas = new OffscreenCanvas(request.layout.size, request.layout.size)
+    const canvas = new OffscreenCanvas(request.specification.size, request.specification.size)
     renderMircle({
-      ...request,
       canvas,
+      specification: request.specification,
       onProgress: progressPercent => self.postMessage({ progressPercent })
     })
-    console.log('Generating bitmap...')
+    console.debug('Generating bitmap...')
     const bitmap = canvas.transferToImageBitmap()
     self.postMessage({ result: bitmap }, [bitmap]) // transfer bitmap to main thread
   }

@@ -30,9 +30,8 @@ async function render() {
   try {
     await createMircle({
       canvas,
-      layout: toRaw(store.layout),
+      specification: toRaw(store.layout),
       // styles: toRaw(store.styles),
-      invert: store.options.invert,
       onProgress: p => store.renderProgress = p,
       signal: toRaw(controller.signal)
     })

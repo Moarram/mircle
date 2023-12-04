@@ -15,38 +15,61 @@ export type MircleConnection = {
   end: number,
 }
 
-export type MircleLine = Line & MircleConnection
-
-export type Grouped<T> = T & {
-  occurrences: number,
+export type GroupedMircleConnection = MircleConnection & {
+  count: number, // how many times this line appears
+  multiples?: number[], // every multiple that defines this line
 }
 
+export type MircleLine = Line & MircleConnection
+export type GroupedMircleLine = Line & GroupedMircleConnection
+
 // TODO allow non-integer modulo
-// TODO specify radius sooner
 
 export type LayoutMircleArgs = {
   modulo: number, // number of points around the circle
-  multiple?: number, // mutliplier for modulo to find second points, otherwise all
-  size: number, // width and height of image
-  padding?: number, // space between circle and edge of image
+  multiple?: number, // optional multiple of modulo, otherwise all
+  radius: number, // radius of circle
+  origin?: Point, // center of circle
 }
-export function layoutMircle({ modulo, multiple, size, padding=0 }: LayoutMircleArgs): Grouped<MircleLine>[] {
-  const connections: MircleConnection[] = []
+export function layoutMircle({ modulo, multiple, radius, origin={x:0,y:0} }: LayoutMircleArgs): GroupedMircleLine[] {
+  const connectionsByMultiple: Record<number, MircleConnection[]> = {}
   if (multiple !== undefined) {
-    connections.push(...computeConnections({ modulo, multiple }))
+    connectionsByMultiple[multiple] = computeConnections({ modulo, multiple })
   } else {
     for (let multiple = 0; multiple < modulo; multiple++) {
-      connections.push(...computeConnections({ modulo, multiple }))
+      connectionsByMultiple[multiple] = computeConnections({ modulo, multiple })
     }
   }
-  const groupedConnections = groupConnections({ connections, modulo, includeMissing: true })
-  const radius = (size - padding * 2) / 2
+
+  const groups: Record<number,Record<number,{count:number,multiples:number[]}>> = {} // maps start -> end -> { count, multiples }
+  Object.entries(connectionsByMultiple).forEach(([key, connections]) => {
+    const multiple = parseFloat(key)
+    connections.forEach(({ start, end }) => {
+      if (!(start in groups)) groups[start] = {}
+      if (!(end in groups[start])) groups[start][end] = { count: 0, multiples: [] }
+      groups[start][end].count += 1
+      if (groups[start][end].multiples.includes(multiple)) return // continue
+      groups[start][end].multiples.push(multiple)
+    })
+  })
+
+  const groupedConnections: GroupedMircleConnection[] = []
+  Object.entries(groups).forEach(([startKey, endVal]) => {
+    Object.entries(endVal).forEach(([endKey, group]) => {
+      groupedConnections.push({
+        start: parseFloat(startKey),
+        end: parseFloat(endKey),
+        ...group,
+      })
+    })
+  })
+
   const groupedLines = groupedConnections.map(connection => ({
     ...connection,
-    ...computeLine({ connection, modulo, radius }),
+    ...computeLine({ connection, modulo, radius, origin }),
   }))
 
-  return groupedLines //.sort((a, b) => math.distance(a.pos, a.pos2) - math.distance(b.pos, b.pos2))
+  return groupedLines
 }
 
 type ComputeConnectionsArgs = {
@@ -60,35 +83,6 @@ function computeConnections({ modulo, multiple }: ComputeConnectionsArgs): Mircl
     if (start !== end) connections.push({ start, end })
   }
   return connections
-}
-
-type GroupConnectionsArgs = {
-  connections: MircleConnection[],
-  modulo: number,
-  includeMissing?: boolean,
-}
-function groupConnections({ connections, modulo, includeMissing }: GroupConnectionsArgs): Grouped<MircleConnection>[] {
-  const groups: Record<number,Record<number,number>> = {} // { start: { end: n, end2: n, ... }, start2: {}, ... }
-  connections.forEach(connection => {
-    const start = Math.min(connection.start, connection.end)
-    const end = Math.max(connection.start, connection.end)
-    if (!(start in groups)) groups[start] = {}
-    if (!(end in groups[start])) groups[start][end] = 0
-    groups[start][end] += 1
-  })
-  const grouped: Grouped<MircleConnection>[] = []
-  for (let start = 0; start < modulo; start++) {
-    for (let end = start; end < modulo; end++) {
-      const occurrences = (start in groups && end in groups[start]) ? groups[start][end] : 0
-      // if (occurrences) {
-      if ((occurrences || includeMissing) && start !== end) {
-        grouped.push({ start, end, occurrences })
-      }
-    }
-  }
-  grouped.sort((a, b) => a.start - b.start)
-  grouped.sort((a, b) => a.occurrences - b.occurrences)
-  return grouped
 }
 
 type ComputeLineArgs = {

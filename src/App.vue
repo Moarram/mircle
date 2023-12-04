@@ -9,6 +9,11 @@ import ProgressBar from './components/ProgressBar.vue';
 
 const mircle = ref<InstanceType<typeof TheMircle>>()
 
+if (import.meta.hot) {
+  // when Vite reloads files, re-render
+  import.meta.hot.on('vite:afterUpdate', render)
+}
+
 onMounted(() => {
   const ratio = window.devicePixelRatio || 1
   const size = Math.min(window.innerWidth, window.innerHeight) * ratio
@@ -16,12 +21,14 @@ onMounted(() => {
   // if (!store.isRendering) mircle.value?.render()
 })
 
-watch([store.layout, store.styles, store.options], () => {
-  if (store.options.autoRender) {
-    if (store.isRendering) mircle.value?.abort()
-    if (!store.isDownloading) mircle.value?.render()
-  }
+watch([store.layout, store.options], () => {
+  if (store.options.autoRender) render()
 })
+
+function render() {
+  if (store.isRendering) mircle.value?.abort()
+  if (!store.isDownloading) mircle.value?.render()
+}
 </script>
 
 <template>
@@ -67,7 +74,7 @@ main {
   flex-basis: 10rem;
   align-self: center;
   border: 1px solid #333;
-  border-radius: 16px;
+  border-radius: calc(1rem + 3px);
 }
 </style>
 

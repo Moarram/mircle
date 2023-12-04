@@ -24,7 +24,7 @@ const lines = computed(() => store.layout.multiple ? store.layout.modulo : (stor
         id="size"
         v-model="store.layout.size"
         :min="0"
-        :max="20000"
+        :max="16384"
         style="margin-left: 1em;"
       />
       <div style="padding-left: .3em;">px</div>

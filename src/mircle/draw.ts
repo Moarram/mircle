@@ -1,92 +1,112 @@
-import { draw, math } from '@moarram/util'
+import { draw, math, type Position } from '@moarram/util'
 import type { StyledLine } from './style'
 import type { Progress } from '../types'
 
 export type InitCanvasArgs = {
   canvas: HTMLCanvasElement | OffscreenCanvas,
   size: number,
+  alpha?: boolean,
 }
-export function initCanvas({ canvas, size }: InitCanvasArgs): CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D {
+export function initCanvas({ canvas, size, alpha=false }: InitCanvasArgs): CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D {
   canvas.width = size
   canvas.height = size
-  const ctx = canvas.getContext('2d', { alpha: false })
+  const ctx = canvas.getContext('2d', { alpha })
   if (!ctx) throw new Error('Failed to initialize canvas')
   ctx.translate(size / 2, size / 2)
   return ctx
 }
 
-export type BackgroundStyleConfig = {
-  main: string, // color of canvas background
-  circle: string, // color of mircle background, or center of circle gradient
-  circle2?: string, // color of outside of circle gradient
-}
-
-export type DrawMircleBackgroundArgs = {
+export type ClearCanvasArgs = {
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  size: number,
-  padding: number,
-  // styles: BackgroundStyleConfig,
+  color?: string,
 }
-export function drawMircleBackground({ ctx, size, padding }: DrawMircleBackgroundArgs) {
-  draw.rectangleCentered({ ctx, pos: { x: 0, y: 0 }, w: ctx.canvas.width, h: ctx.canvas.height, color: '#000' })
-  // const colors = ['#C31', '#003']
-  // const colors = ['#FDA', '#F50C', '#A018', '#0035']
-  const colors = ['#DD8', '#048', '#000'].reverse()
-  const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2 - padding - 1)
-  colors.forEach((color, i) => {
-    gradient.addColorStop(i / (colors.length - 1), color)
+export function drawBackground({ ctx, color='#000' }: ClearCanvasArgs) {
+  ctx.save()
+  ctx.translate(0, 0)
+  draw.rectangle({
+    ctx,
+    pos: { x: 0, y: 0 },
+    pos2: { x: ctx.canvas.width, y: ctx.canvas.height },
+    color,
   })
-  ctx.fillStyle = gradient
-  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2 - padding - 1 })
+  ctx.restore()
 }
 
-export type DrawMircleLinesArgs = {
+export type GradientSpecification = {
+  [k: number]: string, // map percent [0..1] to color
+}
+
+export type DrawGradientCircleArgs = {
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  lines: StyledLine[],
+  pos?: Position,
+  radius: number,
+  gradient: GradientSpecification,
+}
+export function drawGradientCircle({ ctx, pos={x:0,y:0}, radius, gradient }: DrawGradientCircleArgs) {
+  const radialGradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, radius)
+  Object.entries(gradient).forEach(([percent, color]) => {
+    radialGradient.addColorStop(parseFloat(percent), color)
+  })
+  ctx.fillStyle = radialGradient
+  draw.circle({ ctx, pos, r: radius })
+}
+
+export type GradientLine = {
+  pos: Position,
+  pos2:  Position,
+  thickness?: number,
+  gradient: GradientSpecification,
+}
+export type DrawGradientLineArgs = GradientLine & {
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+}
+export function drawGradientLine({ ctx, pos, pos2, thickness=1, gradient }: DrawGradientLineArgs) {
+  const linearGradient = ctx.createLinearGradient(pos.x, pos.y, pos2.x, pos2.y)
+  Object.entries(gradient).forEach(([percent, color]) => {
+    linearGradient.addColorStop(parseFloat(percent), color)
+  })
+  ctx.strokeStyle = linearGradient
+  draw.line({ ctx, pos, pos2, thickness })
+}
+
+export type DrawGradientLinesArgs = {
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  lines: GradientLine[],
   onProgress?: (progress: Progress) => void,
 }
-export function drawMircleLines({ ctx, lines, onProgress }: DrawMircleLinesArgs) {
+export function drawGradientLines({ ctx, lines, onProgress }: DrawGradientLinesArgs) {
   for (const [i, line] of lines.entries()) { // supposedly for..of performs better than forEach
-    if (Array.isArray(line.color)) {
-      const gradient = ctx.createLinearGradient(line.pos.x, line.pos.y, line.pos2.x, line.pos2.y)
-      line.color.forEach((color, i) => {
-        gradient.addColorStop(i / (line.color.length - 1), color)
-      })
-      ctx.strokeStyle = gradient
-    } else {
-      ctx.strokeStyle = line.color
-    }
-    // TODO bug in Safari... gradient incompatible with line width other than 1
-    // for (let i = 0; i < 5; i++) draw.line({ ctx, ...line, color: undefined })
-    // draw.line({ ctx, pos: line.pos, pos2: line.pos2, thickness: 1 })
-    draw.line({ ctx, ...line, color: undefined })
+    drawGradientLine({ ctx, ...line })
     onProgress && i % 100 === 0 && onProgress({ current: i, total: lines.length })
   }
   onProgress && onProgress({ current: lines.length, total: lines.length })
 }
 
-export type InvertMircleArgs = {
+export type DrawInvertCircleArgs = {
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  size: number,
-  padding: number,
+  pos?: Position,
+  radius: number,
 }
-export function invertMircle({ ctx, size, padding }: InvertMircleArgs) {
+export function drawInvertCircle({ ctx, pos={x:0,y:0}, radius }: DrawInvertCircleArgs) {
+  ctx.save()
   ctx.globalCompositeOperation = 'difference'
-  draw.circle({
-    ctx,
-    pos: { x: 0, y: 0 },
-    r: size / 2 - padding - 1,
-    color: '#FFF'
-  })
+  draw.circle({ ctx, pos, r: radius, color: '#FFF' })
+  ctx.restore()
+}
+
+export type DrawOutlineCircleArgs = {
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  pos?: Position,
+  radius: number,
+  extend: number,
+  color?: string,
+}
+export function drawOutlineCircle({ ctx, pos={x:0,y:0}, radius, extend, color='#000' }: DrawOutlineCircleArgs) {
+  ctx.save()
   ctx.globalCompositeOperation = 'source-over'
-  draw.circle({
-    ctx,
-    pos: { x: 0, y: 0 },
-    r: size / 2 - padding + 30,
-    thickness: 64, // extra thicc
-    fill: false,
-    color: '#000' // we assume a black background
-  })
+  const r = radius + extend / 2 - 1
+  draw.circle({ ctx, pos, r, color, thickness: extend, fill: false })
+  ctx.restore()
 }
 
 export function isOffscreenCanvas(canvas: HTMLCanvasElement | OffscreenCanvas): canvas is OffscreenCanvas {
