@@ -2,12 +2,13 @@
 import { onMounted, ref, toRaw } from 'vue';
 import { store } from '@/store';
 import { createMircle } from '@/mircle/mircle'
-import { delayFrames, downloadCanvas } from '@/utils';
+import { AbortError, delayFrames, downloadCanvas } from '@/utils';
 
 defineExpose({
-  render,
   abort,
   download,
+  render,
+  rerender,
 })
 
 let controller: AbortController | undefined
@@ -15,43 +16,14 @@ let canvas: HTMLCanvasElement
 
 const isError = ref<boolean>()
 
-// TODO re-render properly when modules update
-// TODO track down abord/render bugs... very bad in Safari
-// TODO manage initial color updates better
+// TODO track down bugs in Safari (gradient & line width incompatible, no bitmap over 3840px)
 
-async function render() {
-  store.isRendering = true
-  store.renderProgress = 0
-  isError.value = false
-
-  await delayFrames(1) // give ui a chance to update
-  controller = new AbortController()
-
-  try {
-    await createMircle({
-      canvas,
-      specification: toRaw(store.layout),
-      // styles: toRaw(store.styles),
-      onProgress: p => store.renderProgress = p,
-      signal: toRaw(controller.signal)
-    })
-  } catch (err) {
-    console.error(err)
-    isError.value = true
-  }
-
-  controller = undefined
-  store.isRendering = false
-
-  // await delayFrames(1)
-  // store.layout.modulo += 1
-  // render()
-}
-
+// Cancel an ongoing render
 function abort() {
   controller?.abort()
 }
 
+// Download the canvas contents
 async function download() {
   store.isDownloading = true
   await delayFrames(1) // give ui a chance to update
@@ -59,6 +31,42 @@ async function download() {
   const filename = `mircle${store.layout.modulo}${mult}.png`
   await downloadCanvas(canvas, filename)
   store.isDownloading = false
+}
+
+// Render the mircle
+async function render() {
+  store.isRendering = true
+  store.renderProgress = 0
+  isError.value = false
+
+  controller = new AbortController()
+
+  try {
+    await createMircle({
+      canvas,
+      specification: toRaw(store.layout),
+      onProgress: p => store.renderProgress = p,
+      signal: toRaw(controller.signal)
+    })
+
+  } catch (err) {
+    if (err instanceof AbortError) {
+      //...
+    } else {
+      console.error(err)
+      isError.value = true
+    }
+  }
+
+  controller = undefined
+  store.isRendering = false
+}
+
+// Cancel any ongoing render and then render again
+async function rerender() {
+  if (store.isRendering) abort()
+  await delayFrames(1) // give ui a chance to update
+  if (!store.isDownloading) render()
 }
 
 onMounted(() => {

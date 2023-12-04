@@ -15,9 +15,9 @@ const lines = computed(() => store.layout.multiple ? store.layout.modulo : (stor
     <div class="param">
       <label for="size">Size:</label>
       <div>
-        <BaseButton content="small" @click="store.layout.size = 1000" :engaged="store.layout.size === 1000" :square-right="true" />
-        <BaseButton content="medium" @click="store.layout.size = 2000" :engaged="store.layout.size === 2000" :square-right="true" :square-left="true" />
-        <BaseButton content="large" @click="store.layout.size = 4000" :engaged="store.layout.size === 4000" :square-right="true" :square-left="true" />
+        <BaseButton content="small" @click="store.layout.size = 1000" :engaged="store.layout.size === 1000" :border-right="true" :square-right="true" />
+        <BaseButton content="medium" @click="store.layout.size = 2000" :engaged="store.layout.size === 2000" :border-right="true" :square-right="true" :square-left="true" />
+        <BaseButton content="large" @click="store.layout.size = 4000" :engaged="store.layout.size === 4000" :border-right="true" :square-right="true" :square-left="true" />
         <BaseButton content="huge" @click="store.layout.size = 10000" :engaged="store.layout.size === 10000" :square-left="true" style="color: #B00" />
       </div>
       <BaseNumber

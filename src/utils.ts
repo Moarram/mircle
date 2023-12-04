@@ -1,4 +1,6 @@
 
+export class AbortError extends Error {}
+
 // compute the prime factorization of a number (eg: 24 = 2×2×2×3)
 export function primeFactors(n: number): number[] {
   const factors = [];

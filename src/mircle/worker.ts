@@ -27,5 +27,6 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
     console.debug('Generating bitmap...')
     const bitmap = canvas.transferToImageBitmap()
     self.postMessage({ result: bitmap }, [bitmap]) // transfer bitmap to main thread
+    bitmap?.close() // close bitmap if we still have reference (do we?)
   }
 }

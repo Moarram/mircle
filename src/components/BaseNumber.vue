@@ -63,7 +63,7 @@ function onChange(event: Event) {
   align-items: stretch;
 }
 input {
-  margin-top: 2px;
+  margin-top: 3px;
   -webkit-appearance: textfield;
   -moz-appearance: textfield;
   appearance: textfield;

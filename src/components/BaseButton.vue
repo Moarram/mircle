@@ -10,6 +10,7 @@ const props = defineProps<{
   color?: string,
   squareLeft?: boolean,
   squareRight?: boolean,
+  borderRight?: boolean,
   large?: boolean,
 }>()
 
@@ -33,6 +34,9 @@ const style = computed(() => {
     ...(props.squareRight && {
       borderTopRightRadius: 0,
       borderBottomRightRadius: 0,
+    }),
+    ...(props.borderRight && {
+      borderRight: '1px solid var(--color-border)',
     }),
     ...(props.large && {
       padding: `.5em 1em`,
@@ -63,9 +67,9 @@ input[type="button"] {
   color: #000D;
   background: var(--color-background);
   border: none;
-  border-right: 1px solid var(--color-border);
   border-radius: 5px;
   box-shadow: 0 3px 0 0 var(--color-border);
+  user-select: none;
 
   &:active {
     transform: translate(0, 0);

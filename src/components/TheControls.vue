@@ -32,6 +32,7 @@ const emit = defineEmits<{
       <BaseCheckbox
         id="auto-render"
         v-model="store.options.autoRender"
+        style="margin: .5rem"
       />
       <label for="auto-render">Auto-render</label>
     </div>
@@ -50,5 +51,6 @@ const emit = defineEmits<{
 .ctrl {
   margin-right: .5rem;
   margin-bottom: .5rem;
+  user-select: none;
 }
 </style>

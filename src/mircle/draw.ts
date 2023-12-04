@@ -1,5 +1,4 @@
 import { draw, math, type Position } from '@moarram/util'
-import type { StyledLine } from './style'
 import type { Progress } from '../types'
 
 export type InitCanvasArgs = {
@@ -12,7 +11,7 @@ export function initCanvas({ canvas, size, alpha=false }: InitCanvasArgs): Canva
   canvas.height = size
   const ctx = canvas.getContext('2d', { alpha })
   if (!ctx) throw new Error('Failed to initialize canvas')
-  ctx.translate(size / 2, size / 2)
+  ctx.translate(size / 2, size / 2) // center of canvas is [0, 0]
   return ctx
 }
 
@@ -77,6 +76,25 @@ export type DrawGradientLinesArgs = {
 export function drawGradientLines({ ctx, lines, onProgress }: DrawGradientLinesArgs) {
   for (const [i, line] of lines.entries()) { // supposedly for..of performs better than forEach
     drawGradientLine({ ctx, ...line })
+    onProgress && i % 100 === 0 && onProgress({ current: i, total: lines.length })
+  }
+  onProgress && onProgress({ current: lines.length, total: lines.length })
+}
+
+export type StyledLine = {
+  pos: Position,
+  pos2: Position,
+  color?: string,
+  thickness?: number,
+}
+export type DrawLinesArgs = {
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  lines: StyledLine[],
+  onProgress?: (progress: Progress) => void,
+}
+export function drawLines({ ctx, lines, onProgress }: DrawLinesArgs) {
+  for (const [i, line] of lines.entries()) { // supposedly for..of performs better than forEach
+    draw.line({ ctx, ...line })
     onProgress && i % 100 === 0 && onProgress({ current: i, total: lines.length })
   }
   onProgress && onProgress({ current: lines.length, total: lines.length })

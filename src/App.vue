@@ -6,29 +6,31 @@ import TheControls from './components/TheControls.vue';
 import TheLayout from './components/TheLayout.vue';
 // import TheStyle from './components/TheStyle.vue';
 import ProgressBar from './components/ProgressBar.vue';
+import { delayFrames } from './utils';
 
 const mircle = ref<InstanceType<typeof TheMircle>>()
 
 if (import.meta.hot) {
-  // when Vite reloads files, re-render
-  import.meta.hot.on('vite:afterUpdate', render)
+  // re-render when Vite reloads files
+  import.meta.hot.on('vite:afterUpdate', () => {
+    mircle.value?.rerender()
+  })
 }
 
 onMounted(() => {
+  // set initial size relative to display
   const ratio = window.devicePixelRatio || 1
   const size = Math.min(window.innerWidth, window.innerHeight) * ratio
   store.layout.size = size - 20 * ratio
-  // if (!store.isRendering) mircle.value?.render()
 })
 
 watch([store.layout, store.options], () => {
-  if (store.options.autoRender) render()
+  // re-render when options change
+  if (store.options.autoRender) {
+    mircle.value?.rerender()
+  }
 })
 
-function render() {
-  if (store.isRendering) mircle.value?.abort()
-  if (!store.isDownloading) mircle.value?.render()
-}
 </script>
 
 <template>
@@ -37,7 +39,7 @@ function render() {
       <TheMircle ref="mircle" />
     </div>
     <div id="panel">
-      <TheControls @render="mircle?.render" @abort="mircle?.abort" @download="mircle?.download" />
+      <TheControls @render="mircle?.rerender" @abort="mircle?.abort" @download="mircle?.download" />
       <TheLayout />
       <!-- <TheStyle /> -->
       <div style="position: absolute; bottom: -2rem; left: 1rem; right: 1rem">

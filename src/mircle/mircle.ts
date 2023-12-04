@@ -1,7 +1,7 @@
 import { layoutMircle } from './layout'
-import { initCanvas, drawGradientCircle, drawInvertCircle, drawOutlineCircle, drawGradientLines, drawBackground } from './draw'
+import { initCanvas, drawGradientCircle, drawInvertCircle, drawOutlineCircle, drawGradientLines, drawLines, drawBackground } from './draw'
 import type { WorkerRequest, WorkerResponse } from './worker'
-import { delayFrames, group, statistics } from '@/utils'
+import { AbortError, delayFrames, group, statistics } from '@/utils'
 import { Colorful, array, draw, math } from '@moarram/util'
 
 export type CreateMircleArgs = {
@@ -10,20 +10,26 @@ export type CreateMircleArgs = {
   onProgress?: (progressPercent: number) => void,
   signal?: AbortSignal,
 }
+// Render mircle image with a worker and transfer to canvas
 export async function createMircle({ canvas, specification, signal, onProgress }: CreateMircleArgs) {
-  const bitmap = await renderMircleWithWorker({ specification, signal, onProgress })
-  if (!bitmap) return // aborted
+  let bitmap: ImageBitmap | undefined
 
-  await delayFrames(2) // give ui a chance to update
+  try {
+    bitmap = await renderMircleWithWorker({ specification, signal, onProgress })
 
-  console.debug('Drawing bitmap...')
-  canvas.width = bitmap.width
-  canvas.height = bitmap.height
-  const ctx = canvas.getContext('bitmaprenderer')
-  ctx?.transferFromImageBitmap(bitmap)
-  bitmap.close() // cleanup
+    await delayFrames(2) // give ui a chance to update
 
-  console.debug('Done!')
+    console.debug('Drawing bitmap...')
+    canvas.width = bitmap.width
+    canvas.height = bitmap.height
+    const ctx = canvas.getContext('bitmaprenderer')
+    ctx?.transferFromImageBitmap(bitmap)
+
+    console.debug('Done!')
+
+  } finally {
+    bitmap?.close() // cleanup
+  }
 }
 
 export type RenderMircleWithWorkerArgs = {
@@ -32,7 +38,8 @@ export type RenderMircleWithWorkerArgs = {
   onProgress?: (progressPercent: number) => void,
 }
 let worker: Worker | undefined // instance for re-use
-export async function renderMircleWithWorker({ specification, signal, onProgress }: RenderMircleWithWorkerArgs): Promise<ImageBitmap | void> {
+// Render mircle image with a worker
+export async function renderMircleWithWorker({ specification, signal, onProgress }: RenderMircleWithWorkerArgs): Promise<ImageBitmap> {
   return new Promise((resolve, reject) => {
     if (!worker) {
       worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })
@@ -47,6 +54,7 @@ export async function renderMircleWithWorker({ specification, signal, onProgress
       }
     }
     worker.onerror = (event: ErrorEvent) => {
+      console.debug('Error!')
       worker?.terminate()
       worker = undefined
       reject(event)
@@ -56,7 +64,7 @@ export async function renderMircleWithWorker({ specification, signal, onProgress
       console.debug('Abort!')
       worker?.terminate()
       worker = undefined
-      resolve()
+      reject(new AbortError())
     })
 
     const request: WorkerRequest = {
@@ -78,6 +86,7 @@ export type RenderMircleArgs = {
   specification: MircleSpecification,
   onProgress?: (progressPercent: number) => void,
 }
+// Render mircle on canvas
 export function renderMircle({ canvas, specification: { size, modulo, multiple, padding=0 }, onProgress }: RenderMircleArgs) {
   console.debug('Computing layout...')
   const radius = (size - padding * 2) / 2
@@ -92,85 +101,66 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   const radiusGroups = group(radii)
   const radiusOrder = [...radiusGroups.keys()].sort((a, b) => a - b)
 
-  console.debug(radiusOrder)
+  // console.debug(radiusOrder)
 
   const density = distanceStats.sum / (Math.PI * radius ** 2) // average number of lines over each pixel
   console.debug(density)
+  // TODO utilize density
+  // TODO smarter thickness/opacity distribution (see modulo 47, 48, 49)
 
   const countGroups = group(mircleLines.map(line => line.count)) // map counts -> count
-  const countOrder = Object.keys(countGroups).map(n => parseInt(n)).sort((a, b) => a - b)
+  const countOrder = [...countGroups.keys()].sort((a, b) => a - b)
 
-  console.debug(countGroups)
+  // console.debug(countGroups)
 
-  const gradientLines = mircleLines.map(line => {
-    const midpoint = math.midpoint(line.pos, line.pos2)
-
-    // const countPercent = line.count / countStats.max
-    const countIndex = countOrder.indexOf(line.count)
-    const countPercent = countIndex / (countOrder.length - 1)
-    // const rarityPercent = 
-
-    const distancePercent = math.distance(line.pos, line.pos2) / distanceStats.max
-
-    const lineRadius = math.round(math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2)), 3)
-    const radiusIndex = radiusOrder.indexOf(lineRadius)
-    const radiusPercent = math.distance({ x: 0, y: 0 }, midpoint) / radius
-
-    // TODO Colorful.scale doesn't work well... find alternative
-    // TODO weighted properties
-
-    // TODO generate gradient lines here
-    //...
-
-    const isPrime = countStats.max === 2
-
-    // const alpha = .8 * (isPrime ? .3 : .3 + countPercent * .7) + .2 * (1 - radiusPercent)
-    // const color = Colorful.scale(['#F00', '#FF0'], isPrime ? .2 : countPercent)
-    // const centerColor = color.mix('#F00', topPercent).mix('#0FF', bottomPercent).setAlpha(alpha).hex
-    // const edgeColor = color.mix('#00F', radiusPercent).setAlpha(isPrime ? 0 : countPercent * (1 - radiusPercent)).hex
-
-    // const baseColor = Colorful.scale(['#F01', '#FF5'], countPercent)
-    // const color1 = new Colorful(['#F00', '#0FF', '#0F0', '#F0F', '#FF0', '#00F'].at((countIndex + 3) % 6) || '#FFF')
-    // const color2 = new Colorful(['#F00', '#0FF', '#0F0', '#F0F', '#FF0', '#00F'].at((line.multiples?.length || 0) % 6) || '#FFF')
-    const color1 = Colorful.scale(['#FED', '#F82', '#800', '#0000'], radiusPercent)
-    // const color = countOrder.indexOf(line.count) % 2 ? baseColor.mix('#00F', .6) : baseColor // alternating
-    // color.setAlpha((.01 + (line.count / countStats.max) * .99) * radiusPercent / 2)
-    // const color1 = new Colorful('#FFF')
-    color1.setAlpha((1/255 + (line.count / countStats.max) * (1 - radiusPercent ** 2) * 254/255))
-
-    const edge = new Colorful('#000').setAlpha(0)//.setAlpha(line.count / countStats.max)
-
-    return {
-      ...line,
-      // gradient: { 0: edgeColor, .5: centerColor, 1: edgeColor },
-      gradient: { 0: edge.hex, .3: color1.hex, .7: color1.hex, 1: edge.hex },
-      // gradient: { 0: '#0000', .5: color.setAlpha(.1 + countPercent * .9).hex, 1: '#0000' },
-      thickness: isPrime ? 1 : 1 + countPercent * (radius / 2000),
-    }
+  const styledLines = mircleLines.map(line => {
+    const lineRadius = math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2))
+    // const color = new Colorful('#FFF')
+    // const color = Colorful.scale(['#F00', '#00F'], 1 - lineRadius / radius)
+    // const color = new Colorful((['#F00', '#FF0', '#0F0', '#0FF', '#00F', '#F0F'].at(countOrder.indexOf(line.count) % 6)) || '#FFF')
+    const color = Colorful.scale(['#F00', '#FF0', '#0F0', '#0FF', '#00F', '#F0F', '#FFF'], countOrder.indexOf(line.count) / countOrder.length)
+    color.setAlpha((.01 + (line.count / countStats.max) * .99))
+    if (countStats.max === 1) color.setAlpha(.02)
+    return { ...line, color: color.hex }
+    // return { ...line, color: '#FFF1' }
   })
 
   console.debug('Preparing canvas...')
-  const ctx = initCanvas({ canvas, size })
+  const ctx = initCanvas({ canvas, size, alpha: true })
   ctx.globalCompositeOperation = 'lighter' // colors add together to become brighter
+  // ctx.globalCompositeOperation = 'source-out'
+  // ctx.scale(2, 2)
 
-  console.debug('Drawing background...')
-  drawBackground({ ctx })
-  drawGradientCircle({ ctx, radius, gradient: { 0: '#F83', 0.5: '#8008', 1: '#3080' } })
+  // console.debug('Drawing background...')
+  // drawBackground({ ctx })
+  // drawGradientCircle({ ctx, radius, gradient: { 0: '#88F', 1: '#0000' } })
   // drawGradientCircle({ ctx, radius, gradient: { 0: '#000', 0.3: '#08F', .7: '#8FF', 1: '#FFF' } })
 
-  // ctx.save()
-  // ctx.translate(-size / 2, -size / 2)
-  // draw.rectangleDebug({ ctx, pos: { x: 0, y: 0 }, pos2: { x: canvas.width, y: canvas.height } })
-  // ctx.restore()
-
-  console.debug('Drawing lines...')
-  drawGradientLines({
+  console.debug(`Drawing ${styledLines.length} lines...`)
+  // ctx.globalCompositeOperation = 'lighten'
+  drawLines({
     ctx,
-    lines: gradientLines,
+    lines: styledLines,
     onProgress: progress => onProgress && onProgress(progress.current / progress.total),
   })
 
   // console.debug('Inverting...')
   // drawInvertCircle({ ctx, radius })
-  drawOutlineCircle({ ctx, radius, extend: radius / 2 })
+
+  console.debug('Shading...')
+  ctx.globalCompositeOperation = 'source-atop' // circle only under lines (as if the lines reveal the circle)
+  drawGradientCircle({ ctx, radius, gradient: { 0: '#FFF8', .5: '#00F4', 1: '#000' } })
+
+  ctx.globalCompositeOperation = 'destination-over' // circle under lines (as if the circle was drawn first)
+  drawGradientCircle({ ctx, radius, gradient: { 0: '#F004', 1: '#0080' } })
+
+  ctx.globalCompositeOperation = 'destination-in' // crop to the circle
+  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius - 1, color: '#000' })
+
+  // drawOutlineCircle({ ctx, radius, extend: radius / 2 }) // crop outside edge
+
+  // ctx.save()
+  // ctx.resetTransform()
+  // draw.rectangleDebug({ ctx, pos: { x: 0, y: 0 }, pos2: { x: canvas.width, y: canvas.height } })
+  // ctx.restore()
 }
