@@ -1,13 +1,8 @@
-import { math } from '@moarram/util'
-
-export type Point = {
-  x: number, // horizontal offset from left
-  y: number, // vertical offset from top
-}
+import { math, type Position } from '@moarram/util'
 
 export type Line = {
-  pos: Point, // start position
-  pos2: Point, // end position
+  pos: Position, // start position
+  pos2: Position, // end position
 }
 
 export type MircleConnection = {
@@ -16,50 +11,57 @@ export type MircleConnection = {
 }
 
 export type GroupedMircleConnection = MircleConnection & {
-  count: number, // how many times this line appears
-  multiples?: number[], // every multiple that defines this line
+  multiples: number[], // every multiple that defines this line
 }
 
 export type MircleLine = Line & MircleConnection
 export type GroupedMircleLine = Line & GroupedMircleConnection
 
-// TODO allow non-integer modulo
-
 export type LayoutMircleArgs = {
   modulo: number, // number of points around the circle
-  multiple?: number, // optional multiple of modulo, otherwise all
+  multiple: number, // multiplier to find second point
   radius: number, // radius of circle
-  origin?: Point, // center of circle
+  origin?: Position, // center of circle
 }
-export function layoutMircle({ modulo, multiple, radius, origin={x:0,y:0} }: LayoutMircleArgs): GroupedMircleLine[] {
+export function layoutMircle({ modulo, multiple, radius, origin={x:0,y:0} }: LayoutMircleArgs): MircleLine[] {
+  const connections = computeConnections({ modulo, multiple })
+  const lines = connections.map(connection => ({
+    ...connection,
+    ...computeLine({ connection, modulo, radius, origin })
+  }))
+  return lines
+}
+
+export type LayoutGroupedMircleArgs = {
+  modulo: number, // number of points around the circle
+  radius: number, // radius of circle
+  origin?: Position, // center of circle
+}
+export function layoutGroupedMircle({ modulo, radius, origin={x:0,y:0} }: LayoutGroupedMircleArgs): GroupedMircleLine[] {
+  // TODO re-write to use Map() and group util
   const connectionsByMultiple: Record<number, MircleConnection[]> = {}
-  if (multiple !== undefined) {
+  for (let multiple = 0; multiple < modulo; multiple++) {
     connectionsByMultiple[multiple] = computeConnections({ modulo, multiple })
-  } else {
-    for (let multiple = 0; multiple < modulo; multiple++) {
-      connectionsByMultiple[multiple] = computeConnections({ modulo, multiple })
-    }
   }
 
-  const groups: Record<number,Record<number,{count:number,multiples:number[]}>> = {} // maps start -> end -> { count, multiples }
+  const groups: Record<number,Record<number,number[]>> = {} // maps start -> end -> [multiples]
   Object.entries(connectionsByMultiple).forEach(([key, connections]) => {
     const multiple = parseFloat(key)
     connections.forEach(({ start, end }) => {
       if (!(start in groups)) groups[start] = {}
-      if (!(end in groups[start])) groups[start][end] = { count: 0, multiples: [] }
-      groups[start][end].count += 1
-      if (groups[start][end].multiples.includes(multiple)) return // continue
-      groups[start][end].multiples.push(multiple)
+      if (!(end in groups[start])) groups[start][end] = []
+      if (groups[start][end].includes(multiple)) return // continue
+      groups[start][end].push(multiple)
     })
   })
 
   const groupedConnections: GroupedMircleConnection[] = []
   Object.entries(groups).forEach(([startKey, endVal]) => {
-    Object.entries(endVal).forEach(([endKey, group]) => {
+    Object.entries(endVal).forEach(([endKey, multiples]) => {
       groupedConnections.push({
         start: parseFloat(startKey),
         end: parseFloat(endKey),
-        ...group,
+        multiples,
       })
     })
   })
@@ -89,7 +91,7 @@ type ComputeLineArgs = {
   connection: MircleConnection,
   modulo: number,
   radius: number,
-  origin?: Point,
+  origin?: Position,
   rotation?: number, // radians
 }
 function computeLine({ connection, modulo, radius, origin={x:0,y:0}, rotation=(-Math.PI/2) }: ComputeLineArgs): Line {

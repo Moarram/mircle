@@ -1,8 +1,9 @@
-import { layoutMircle } from './layout'
-import { initCanvas, drawGradientCircle, drawInvertCircle, drawOutlineCircle, drawGradientLines, drawLines, drawBackground } from './draw'
+import { layoutGroupedMircle, layoutMircle } from './layout'
+import { initCanvas, drawGradientCircle, drawGradientLines, drawLines, drawBackground } from './draw'
 import type { WorkerRequest, WorkerResponse } from './worker'
-import { AbortError, delayFrames, group, statistics } from '@/utils'
-import { Colorful, array, draw, math } from '@moarram/util'
+import { AbortError, delayFrames, group, primeFactors, statistics } from '@/utils'
+import { Colorful, draw, math } from '@moarram/util'
+import type { Progress } from '@/types'
 
 export type CreateMircleArgs = {
   canvas: HTMLCanvasElement,
@@ -88,79 +89,112 @@ export type RenderMircleArgs = {
 }
 // Render mircle on canvas
 export function renderMircle({ canvas, specification: { size, modulo, multiple, padding=0 }, onProgress }: RenderMircleArgs) {
-  console.debug('Computing layout...')
-  const radius = (size - padding * 2) / 2
-  const mircleLines = layoutMircle({ modulo, multiple, radius })
-
-  console.debug('Computing style...')
-  const countStats = statistics(mircleLines.map(line => line.count))
-  const distanceStats = statistics(mircleLines.map(line => math.distance(line.pos, line.pos2)))
-
-  const radii = mircleLines.map(line => math.round(math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2)), 3))
-  const radiusStats = statistics(radii)
-  const radiusGroups = group(radii)
-  const radiusOrder = [...radiusGroups.keys()].sort((a, b) => a - b)
-
-  // console.debug(radiusOrder)
-
-  const density = distanceStats.sum / (Math.PI * radius ** 2) // average number of lines over each pixel
-  console.debug(density)
-  // TODO utilize density
-  // TODO smarter thickness/opacity distribution (see modulo 47, 48, 49)
-
-  const countGroups = group(mircleLines.map(line => line.count)) // map counts -> count
-  const countOrder = [...countGroups.keys()].sort((a, b) => a - b)
-
-  // console.debug(countGroups)
-
-  const styledLines = mircleLines.map(line => {
-    const lineRadius = math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2))
-    // const color = new Colorful('#FFF')
-    // const color = Colorful.scale(['#F00', '#00F'], 1 - lineRadius / radius)
-    // const color = new Colorful((['#F00', '#FF0', '#0F0', '#0FF', '#00F', '#F0F'].at(countOrder.indexOf(line.count) % 6)) || '#FFF')
-    const color = Colorful.scale(['#F00', '#FF0', '#0F0', '#0FF', '#00F', '#F0F', '#FFF'], countOrder.indexOf(line.count) / countOrder.length)
-    color.setAlpha((.01 + (line.count / countStats.max) * .99))
-    if (countStats.max === 1) color.setAlpha(.02)
-    return { ...line, color: color.hex }
-    // return { ...line, color: '#FFF1' }
-  })
-
   console.debug('Preparing canvas...')
   const ctx = initCanvas({ canvas, size, alpha: true })
-  ctx.globalCompositeOperation = 'lighter' // colors add together to become brighter
-  // ctx.globalCompositeOperation = 'source-out'
-  // ctx.scale(2, 2)
 
-  // console.debug('Drawing background...')
-  // drawBackground({ ctx })
-  // drawGradientCircle({ ctx, radius, gradient: { 0: '#88F', 1: '#0000' } })
-  // drawGradientCircle({ ctx, radius, gradient: { 0: '#000', 0.3: '#08F', .7: '#8FF', 1: '#FFF' } })
+  console.debug('Computing layout...')
+  const radius = (size - padding * 2) / 2
+  const mircleLines = layoutGroupedMircle({ modulo, radius })
+    .sort((a, b) => a.multiples.length - b.multiples.length)
+    // .sort((a, b) => math.distance(a.pos, a.pos2) - math.distance(b.pos, b.pos2))
 
-  console.debug(`Drawing ${styledLines.length} lines...`)
-  // ctx.globalCompositeOperation = 'lighten'
+  const lineRadiusStats = statistics(mircleLines.map(line => math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2))))
+  const lineDistanceStats = statistics(mircleLines.map(line => math.distance(line.pos, line.pos2)))
+
+  const mircleLinesByStack = group(mircleLines, line => line.multiples.length) // maps stack to lines
+  const stacks = [...mircleLinesByStack.keys()].sort((a, b) => a - b) // ascending order
+  const stackStats = statistics(stacks)
+  const stackDistances = new Map(Array.from(mircleLinesByStack).map(([stack, lines]) => [stack, lines.reduce((acc, line) => acc + math.distance(line.pos, line.pos2), 0)])) // map: stack -> distance
+
+  console.debug(stacks)
+
+  const density = lineDistanceStats.sum / (Math.PI * radius ** 2) // average number of lines over each pixel
+  const densityTarget = 10 // desired density
+  const densityMultiplier = math.clamp(densityTarget / density, 0.01, 10) // multiplier to reach target
+  console.debug(densityMultiplier)
+
+  console.debug('Computing styles...')
+  const styledLines = mircleLines.map(line => {
+    // const angle = math.angle(line.pos, line.pos2)
+    // const verticalPercent = Math.sin(angle) ** 6
+    // const horizontalPercent = Math.cos(angle) ** 6
+    // const diagonalPercent = 1 - Math.max(verticalPercent, horizontalPercent) * 0.7
+
+    const lineRadius = math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2))
+    const lineRadiusPercent = lineRadius / lineRadiusStats.max
+
+    const lineDistance = math.distance(line.pos, line.pos2)
+    const lineDistancePercent = lineDistance / lineDistanceStats.max // 0=short 1=long
+
+    const stack = line.multiples.length
+    const stackMaxPercent = stack / stackStats.max
+    const stackIndexPercent = stacks.length > 1 ? (stacks.indexOf(stack) / (stacks.length - 1)) : 0
+    const stackSizePercent = (mircleLinesByStack.get(stack)||[]).length / mircleLines.length
+    const stackPercent = stackMaxPercent * 0.5 + stackIndexPercent * 0.5
+
+    // const isStackPrime = primeFactors(stack).length === 1
+    // const isModuloPrime = primeFactors(modulo).length === 1
+
+    const l = (1 - lineRadiusPercent) * 0.7 + 0.3
+    const c = 0.5//(1 - stackMaxPercent) * 0.4 + 0.1
+    const h = (1 - lineDistancePercent ** 9) * 100 + 170
+    const a = math.clamp((stackMaxPercent * (1 - stackSizePercent) * 0.9 + 0.02 * densityMultiplier), 0, 1)
+
+    return {
+      ...line,
+      color: `oklch(${l} ${c} ${h} / ${a})`,
+      thickness: 1 + stackPercent * 2 * (densityMultiplier / 2),
+    }
+  })
+
+  console.debug('Drawing background...')
+  ctx.globalCompositeOperation = 'source-over'
+  drawGradientCircle({ ctx, radius, gradient: { 0: '#11F8', 1: '#F001' } })
+  drawGradientCircle({ ctx, radius, gradient: { 0.5: '#0000', 1: '#F0F4' } })
+  drawGradientCircle({ ctx, radius, gradient: { 0: '#FA1', 0.5: '#1850' } })
+
+  console.debug('Drawing lines...')
+  ctx.globalCompositeOperation = 'lighter' // colors are added together (ex: #808 + #FF0 = #FF8)
   drawLines({
     ctx,
     lines: styledLines,
     onProgress: progress => onProgress && onProgress(progress.current / progress.total),
   })
+  // drawGradientLines({
+  //   ctx,
+  //   lines: styledLines.map(line => ({ ...line, gradient: { 0: '#40F0', 0.3: line.color, 0.7: line.color, 1: '#40F0' } })),
+  //   onProgress: progress => onProgress && onProgress(progress.current / progress.total),
+  // })
 
-  // console.debug('Inverting...')
-  // drawInvertCircle({ ctx, radius })
+  // TODO utilize density
+  // TODO smarter thickness/opacity distribution (see modulo 47, 48, 49)
 
   console.debug('Shading...')
-  ctx.globalCompositeOperation = 'source-atop' // circle only under lines (as if the lines reveal the circle)
-  drawGradientCircle({ ctx, radius, gradient: { 0: '#FFF8', .5: '#00F4', 1: '#000' } })
+  ctx.globalCompositeOperation = 'source-atop' // draw new content within old content (as if the old content reveals the new content)
+  drawGradientCircle({ ctx, radius, gradient: { 0.6: '#0000', 1: '#000' } })
+  // drawGradientCircle({ ctx, radius, gradient: { 0: '#F000', 1: '#00F' } })
+  ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
+  // drawGradientCircle({ ctx, radius, gradient: { 0: '#FA08', 1: '#00F0' } })
+  // drawGradientCircle({ ctx, radius, gradient: { 0: '#C31', 1: '#104' } })
 
-  ctx.globalCompositeOperation = 'destination-over' // circle under lines (as if the circle was drawn first)
-  drawGradientCircle({ ctx, radius, gradient: { 0: '#F004', 1: '#0080' } })
 
-  ctx.globalCompositeOperation = 'destination-in' // crop to the circle
+  console.debug('Drawing accents...')
+  ctx.globalCompositeOperation = 'lighter'
+  drawLines({
+    ctx,
+    lines: styledLines.map(line => ({
+      ...line,
+      color: `rgb(255 0 0 / ${(line.multiples.length / stackStats.max) ** 1.8})`,
+    }))
+  })
+
+  // console.debug('Inverting...')
+  // ctx.globalCompositeOperation = 'difference'
+  // draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius, color: '#FFF' })
+
+  console.debug('Cropping...')
+  ctx.globalCompositeOperation = 'destination-in' // crop old content to new content (as if new content defines the shape)
   draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius - 1, color: '#000' })
-
-  // drawOutlineCircle({ ctx, radius, extend: radius / 2 }) // crop outside edge
-
-  // ctx.save()
-  // ctx.resetTransform()
-  // draw.rectangleDebug({ ctx, pos: { x: 0, y: 0 }, pos2: { x: canvas.width, y: canvas.height } })
-  // ctx.restore()
+  ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
+  drawBackground({ ctx, color: '#000' })
 }

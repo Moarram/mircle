@@ -15,13 +15,13 @@ export function initCanvas({ canvas, size, alpha=false }: InitCanvasArgs): Canva
   return ctx
 }
 
-export type ClearCanvasArgs = {
+export type DrawBackgroundArgs = {
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   color?: string,
 }
-export function drawBackground({ ctx, color='#000' }: ClearCanvasArgs) {
+export function drawBackground({ ctx, color='#000' }: DrawBackgroundArgs) {
   ctx.save()
-  ctx.translate(0, 0)
+  ctx.resetTransform()
   draw.rectangle({
     ctx,
     pos: { x: 0, y: 0 },
@@ -98,33 +98,6 @@ export function drawLines({ ctx, lines, onProgress }: DrawLinesArgs) {
     onProgress && i % 100 === 0 && onProgress({ current: i, total: lines.length })
   }
   onProgress && onProgress({ current: lines.length, total: lines.length })
-}
-
-export type DrawInvertCircleArgs = {
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pos?: Position,
-  radius: number,
-}
-export function drawInvertCircle({ ctx, pos={x:0,y:0}, radius }: DrawInvertCircleArgs) {
-  ctx.save()
-  ctx.globalCompositeOperation = 'difference'
-  draw.circle({ ctx, pos, r: radius, color: '#FFF' })
-  ctx.restore()
-}
-
-export type DrawOutlineCircleArgs = {
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  pos?: Position,
-  radius: number,
-  extend: number,
-  color?: string,
-}
-export function drawOutlineCircle({ ctx, pos={x:0,y:0}, radius, extend, color='#000' }: DrawOutlineCircleArgs) {
-  ctx.save()
-  ctx.globalCompositeOperation = 'source-over'
-  const r = radius + extend / 2 - 1
-  draw.circle({ ctx, pos, r, color, thickness: extend, fill: false })
-  ctx.restore()
 }
 
 export function isOffscreenCanvas(canvas: HTMLCanvasElement | OffscreenCanvas): canvas is OffscreenCanvas {

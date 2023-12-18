@@ -1,12 +1,20 @@
+import type { Position } from "@moarram/util";
+import type { Line } from "./mircle/layout";
 
+/** An ongoing activity has been cancelled */
 export class AbortError extends Error {}
 
-// compute the prime factorization of a number (eg: 24 = 2×2×2×3)
+/**
+ * Compute the prime factorization of a number
+ *
+ * @example
+ * primeFactors(24) -> [2, 2, 2, 3]
+ */
 export function primeFactors(n: number): number[] {
   const factors = [];
   let divisor = 2;
   while (n >= 2) {
-    if (n % divisor == 0) {
+    if (n % divisor === 0) {
       factors.push(divisor);
       n = n / divisor;
     } else {
@@ -25,7 +33,14 @@ export type Statistics = {
   stdev: number,
   sum: number,
 }
-// compute some statistics about a list of numbers
+/**
+ * Compute some statistics about an array of numbers
+ *
+ * (count, min, max, mean, median, stdev, sum)
+ *
+ * @example
+ * statistics([1, 2, 3]).stdev -> 0.8165...
+ */
 export function statistics(values: number[]): Statistics {
   const count = values.length
   if (!count) return { count: 0, min: 0, max: 0, mean: 0, median: 0, stdev: 0, sum: 0 }
@@ -40,24 +55,41 @@ export function statistics(values: number[]): Statistics {
   return { count, min, max, mean, median, stdev, sum }
 }
 
-// map each value to the count
-export function group(values: number[]) {
-  const grouped: Map<number, number> = new Map()
-  values.forEach(value => {
-    const existing = grouped.get(value) || 0
-    grouped.set(value, existing + 1)
+/**
+ * Group items by specified key
+ *
+ * @example
+ * const grouped = group(['a1', 'a2', 'b1'], s => s[1]) // group by second char
+ * grouped.get('1') -> ['a1', 'b1']
+ * grouped.get('2') -> ['a2']
+ */
+export function group<K, T>(items: T[], toKey: (item: T) => K): Map<K, T[]> {
+  const grouped = new Map()
+  items.forEach(item => {
+    const key = toKey(item)
+    if (grouped.has(key)) {
+      grouped.get(key).push(item)
+    } else {
+      grouped.set(key, [item])
+    }
   })
   return grouped
 }
 
-// wait for specified number of animation frames
+/** Compute the slope of a line */
+export function slope(pos: Position, pos2: Position) {
+  if (pos.x === pos2.x) return undefined // vertical line
+  return (pos2.y - pos.y) / (pos2.x - pos.x)
+}
+
+/** Wait for specified number of animation frames */
 export async function delayFrames(n: number) {
   for (let i = 0; i < n; i++) {
     await new Promise(resolve => window.requestAnimationFrame(resolve))
   }
 }
 
-// download a canvas as PNG
+/** Download a canvas as PNG image */
 export async function downloadCanvas(canvas: HTMLCanvasElement, filename: string) {
   console.debug('Generating blob...')
   const blob = await new Promise<Blob|null>(resolve => canvas.toBlob(resolve))
@@ -70,7 +102,7 @@ export async function downloadCanvas(canvas: HTMLCanvasElement, filename: string
   console.debug('Done!')
 }
 
-// download a blob
+/** Download a blob of data */
 export async function downloadBlob(blob: Blob, filename: string) {
   const link = document.createElement('a')
   link.download = filename
