@@ -42,9 +42,13 @@ async function render() {
   controller = new AbortController()
 
   try {
+    const layout = toRaw(store.layout)
     await createMircle({
       canvas,
-      specification: toRaw(store.layout),
+      specification: {
+        ...layout,
+        padding: layout.size / 100, // 1% margin
+      },
       onProgress: p => store.renderProgress = p,
       signal: toRaw(controller.signal)
     })

@@ -1,5 +1,5 @@
 import { layoutGroupedMircle, layoutMircle } from './layout'
-import { initCanvas, drawGradientCircle, drawGradientLines, drawLines, drawBackground } from './draw'
+import { initCanvas, drawGradientCircle, drawGradientLines, drawLines, drawBackground, type StyledLine } from './draw'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { AbortError, delayFrames, group, primeFactors, statistics } from '@/utils'
 import { Colorful, draw, math } from '@moarram/util'
@@ -114,7 +114,9 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   console.debug(densityMultiplier)
 
   console.debug('Computing styles...')
-  const styledLines = mircleLines.map(line => {
+  const accentLines: StyledLine[] = []
+  const styledLines: StyledLine[] = []
+  mircleLines.forEach(line => {
     // const angle = math.angle(line.pos, line.pos2)
     // const verticalPercent = Math.sin(angle) ** 6
     // const horizontalPercent = Math.cos(angle) ** 6
@@ -135,15 +137,20 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
     // const isStackPrime = primeFactors(stack).length === 1
     // const isModuloPrime = primeFactors(modulo).length === 1
 
+    const w = 1 + stackPercent * 2 * (densityMultiplier / 2)
+
     const l = (1 - lineRadiusPercent) * 0.7 + 0.3
     const c = 0.5//(1 - stackMaxPercent) * 0.4 + 0.1
     const h = (1 - lineDistancePercent ** 9) * 100 + 170
     const a = math.clamp((stackMaxPercent * (1 - stackSizePercent) * 0.9 + 0.02 * densityMultiplier), 0, 1)
 
-    return {
-      ...line,
-      color: `oklch(${l} ${c} ${h} / ${a})`,
-      thickness: 1 + stackPercent * 2 * (densityMultiplier / 2),
+    styledLines.push({ ...line, color: `oklch(${l} ${c} ${h} / ${a})`, thickness: w })
+
+    const a2 = (line.multiples.length / stackStats.max) ** 1.6
+    // TODO reduce opacity when lots of lines in largest stack (such as prime numbers or 13x17)
+
+    if (a2 >= 1 / 255) {
+      accentLines.push({ ...line, color: `rgb(255 25 25 / ${a2})`, thickness: w })
     }
   })
 
@@ -158,7 +165,7 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   drawLines({
     ctx,
     lines: styledLines,
-    onProgress: progress => onProgress && onProgress(progress.current / progress.total),
+    onProgress: progress => onProgress && onProgress(progress.current / (styledLines.length + accentLines.length)),
   })
   // drawGradientLines({
   //   ctx,
@@ -166,26 +173,16 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   //   onProgress: progress => onProgress && onProgress(progress.current / progress.total),
   // })
 
-  // TODO utilize density
-  // TODO smarter thickness/opacity distribution (see modulo 47, 48, 49)
-
   console.debug('Shading...')
   ctx.globalCompositeOperation = 'source-atop' // draw new content within old content (as if the old content reveals the new content)
   drawGradientCircle({ ctx, radius, gradient: { 0.6: '#0000', 1: '#000' } })
-  // drawGradientCircle({ ctx, radius, gradient: { 0: '#F000', 1: '#00F' } })
-  ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
-  // drawGradientCircle({ ctx, radius, gradient: { 0: '#FA08', 1: '#00F0' } })
-  // drawGradientCircle({ ctx, radius, gradient: { 0: '#C31', 1: '#104' } })
-
 
   console.debug('Drawing accents...')
   ctx.globalCompositeOperation = 'lighter'
   drawLines({
     ctx,
-    lines: styledLines.map(line => ({
-      ...line,
-      color: `rgb(255 0 0 / ${(line.multiples.length / stackStats.max) ** 1.8})`,
-    }))
+    lines: accentLines,
+    onProgress: progress => onProgress && onProgress((progress.current + styledLines.length) / (styledLines.length + accentLines.length)),
   })
 
   // console.debug('Inverting...')
