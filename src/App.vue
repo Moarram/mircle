@@ -39,8 +39,9 @@ watch([store.layout, store.options], () => {
       <TheMircle ref="mircle" />
     </div>
     <div id="panel">
-      <TheControls @render="mircle?.rerender" @abort="mircle?.abort" @download="mircle?.download" />
       <TheLayout />
+      <div style="width: calc(100% - 1rem); margin: .5rem; border-bottom: 1px solid #333;"></div>
+      <TheControls @render="mircle?.rerender" @abort="mircle?.abort" @download="mircle?.download" />
       <!-- <TheStyle /> -->
       <div style="position: absolute; bottom: -2rem; left: 1rem; right: 1rem">
         <ProgressBar v-if="store.isRendering" :percent="store.renderProgress" />

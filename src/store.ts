@@ -10,7 +10,7 @@ export type Store = {
 }
 export const store = reactive({
   layout: {
-    modulo: 225,
+    modulo: 100,
     multiple: undefined,
     size: 1000,
   },

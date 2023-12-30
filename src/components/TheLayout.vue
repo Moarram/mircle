@@ -13,7 +13,23 @@ const lines = computed(() => store.layout.multiple ? store.layout.modulo : (stor
 <template>
   <div id="layout">
     <div class="param">
-      <label for="size">Size:</label>
+      <label for="modulo">Vertices:</label>
+      <BaseNumber
+        id="modulo"
+        v-model="store.layout.modulo"
+        :min="0"
+        :max="999"
+        :step="1"
+      />
+      <div class="detail">
+        {{ factors.length > 1 ? factors.join('&#8203;×') : '' }}
+      </div>
+      <!-- <div class="detail">
+        ({{ lines }}&nbsp;lines)
+      </div> -->
+    </div>
+    <div class="param" style="margin-top: 1rem; max-width: 100%;">
+      <label for="size">Image size:</label>
       <div>
         <BaseButton content="small" @click="store.layout.size = 1000" :engaged="store.layout.size === 1000" :border-right="true" :square-right="true" />
         <BaseButton content="medium" @click="store.layout.size = 2000" :engaged="store.layout.size === 2000" :border-right="true" :square-right="true" :square-left="true" />
@@ -28,22 +44,6 @@ const lines = computed(() => store.layout.multiple ? store.layout.modulo : (stor
         style="margin-left: 1em;"
       />
       <div style="padding-left: .3em;">px</div>
-    </div>
-    <div class="param" style="margin-top: 1rem; max-width: 100%;">
-      <label for="modulo">Points:</label>
-      <BaseNumber
-        id="modulo"
-        v-model="store.layout.modulo"
-        :min="0"
-        :max="999"
-        :step="1"
-      />
-      <div class="detail">
-        {{ factors.length > 1 ? factors.join('&#8203;×') : '' }}
-      </div>
-      <!-- <div class="detail">
-        ({{ lines }}&nbsp;lines)
-      </div> -->
     </div>
   </div>
 </template>

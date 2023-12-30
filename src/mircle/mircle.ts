@@ -1,9 +1,8 @@
-import { layoutGroupedMircle, layoutMircle } from './layout'
-import { initCanvas, drawGradientCircle, drawGradientLines, drawLines, drawBackground, type StyledLine } from './draw'
+import { layoutGroupedMircle } from './layout'
+import { initCanvas, drawGradientCircle, drawLines, drawBackground, type StyledLine } from './draw'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { AbortError, delayFrames, group, primeFactors, statistics } from '@/utils'
 import { Colorful, draw, math } from '@moarram/util'
-import type { Progress } from '@/types'
 
 export type CreateMircleArgs = {
   canvas: HTMLCanvasElement,
@@ -114,8 +113,8 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   console.debug(densityMultiplier)
 
   console.debug('Computing styles...')
-  const accentLines: StyledLine[] = []
   const styledLines: StyledLine[] = []
+  const accentLines: StyledLine[] = []
   mircleLines.forEach(line => {
     // const angle = math.angle(line.pos, line.pos2)
     // const verticalPercent = Math.sin(angle) ** 6
@@ -128,26 +127,25 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
     const lineDistance = math.distance(line.pos, line.pos2)
     const lineDistancePercent = lineDistance / lineDistanceStats.max // 0=short 1=long
 
-    const stack = line.multiples.length
+    const stack = line.multiples.length // how many multiples define this line
     const stackMaxPercent = stack / stackStats.max
     const stackIndexPercent = stacks.length > 1 ? (stacks.indexOf(stack) / (stacks.length - 1)) : 0
-    const stackSizePercent = (mircleLinesByStack.get(stack)||[]).length / mircleLines.length
-    const stackPercent = stackMaxPercent * 0.5 + stackIndexPercent * 0.5
+    const stackSize = (mircleLinesByStack.get(stack)||[]).length // how many lines have this same number of multiples
+    const stackSizePercent = stackSize / mircleLines.length
 
     // const isStackPrime = primeFactors(stack).length === 1
     // const isModuloPrime = primeFactors(modulo).length === 1
 
-    const w = 1 + stackPercent * 2 * (densityMultiplier / 2)
+    const w = 1 + (stackMaxPercent * 0.5 + stackIndexPercent * 0.5) * densityMultiplier
 
     const l = (1 - lineRadiusPercent) * 0.7 + 0.3
-    const c = 0.5//(1 - stackMaxPercent) * 0.4 + 0.1
     const h = (1 - lineDistancePercent ** 9) * 100 + 170
     const a = math.clamp((stackMaxPercent * (1 - stackSizePercent) * 0.9 + 0.02 * densityMultiplier), 0, 1)
 
-    styledLines.push({ ...line, color: `oklch(${l} ${c} ${h} / ${a})`, thickness: w })
+    styledLines.push({ ...line, color: `oklch(${l} 0.5 ${h} / ${a})`, thickness: w })
 
-    const a2 = (line.multiples.length / stackStats.max) ** 1.6
-    // TODO reduce opacity when lots of lines in largest stack (such as prime numbers or 13x17)
+    const dampen = (253/255 - stackSizePercent * math.clamp(modulo / 50, 0, 1)) ** 4 + 2/255 // reduce opacity when lots of lines in stack (namely prime numbers)
+    const a2 = math.clamp(stackMaxPercent ** 1.6, 0, 1) * dampen
 
     if (a2 >= 1 / 255) {
       accentLines.push({ ...line, color: `rgb(255 25 25 / ${a2})`, thickness: w })
@@ -155,6 +153,7 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   })
 
   console.debug('Drawing background...')
+  // Note: Making this gradient took a lot of finagling... be warned
   ctx.globalCompositeOperation = 'source-over'
   drawGradientCircle({ ctx, radius, gradient: { 0: '#11F8', 1: '#F001' } })
   drawGradientCircle({ ctx, radius, gradient: { 0.5: '#0000', 1: '#F0F4' } })
@@ -167,11 +166,6 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
     lines: styledLines,
     onProgress: progress => onProgress && onProgress(progress.current / (styledLines.length + accentLines.length)),
   })
-  // drawGradientLines({
-  //   ctx,
-  //   lines: styledLines.map(line => ({ ...line, gradient: { 0: '#40F0', 0.3: line.color, 0.7: line.color, 1: '#40F0' } })),
-  //   onProgress: progress => onProgress && onProgress(progress.current / progress.total),
-  // })
 
   console.debug('Shading...')
   ctx.globalCompositeOperation = 'source-atop' // draw new content within old content (as if the old content reveals the new content)
