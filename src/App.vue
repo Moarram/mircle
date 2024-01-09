@@ -59,6 +59,9 @@ const progressText = computed(() => {
         <div style="position: absolute; margin-top: .5rem; color: #FFFC">{{ progressText }}</div>
       </div>
     </div>
+    <div style="position: absolute; bottom: .5rem; right: 1rem; color: #DDD8">
+      <span style="font-style: italic;">Mircle</span> by Moarram (<a href="https://github.com/Moarram/mircle" target="_blank">Source</a>)
+    </div>
   </main>
 </template>
 
@@ -67,6 +70,7 @@ main {
   min-height: calc(100vh - var(--gap) * 2);
   margin: auto;
   padding: var(--gap);
+  position: relative;
   display: flex;
   flex-flow: row wrap;
   gap: var(--gap);
@@ -112,5 +116,18 @@ body {
   margin: 0;
   padding: 0;
   background: #000;
+}
+
+a {
+  color: #38F;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:visited {
+    color: #38F;
+  }
 }
 </style>

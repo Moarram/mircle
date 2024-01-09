@@ -29,7 +29,7 @@ function abort() {
 async function download() {
   store.activity = 'download'
   await delayFrames(1) // give ui a chance to update
-  const mult = store.specification.multiple ? `x${store.specification.multiple}` : ''
+  const mult = store.specification.multiple ? `at${store.specification.multiple}` : ''
   const filename = `mircle${store.specification.modulo}${mult}.png`
   await downloadCanvas(canvas, filename)
   store.activity = null

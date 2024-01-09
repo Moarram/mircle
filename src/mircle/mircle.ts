@@ -80,6 +80,7 @@ export type MircleSpecification = {
   modulo: number, // number of points
   multiple?: number, // optional specific multiple, otherwise all
   padding?: number,
+  style?: 'fancy' | 'plain'
 }
 export type RenderMircleArgs = {
   canvas: HTMLCanvasElement | OffscreenCanvas, // destination canvas
@@ -87,7 +88,7 @@ export type RenderMircleArgs = {
   onProgress?: (progressPercent: number) => void,
 }
 // Render mircle on canvas
-export function renderMircle({ canvas, specification: { size, modulo, multiple, padding=0 }, onProgress }: RenderMircleArgs) {
+export function renderMircle({ canvas, specification: { size, modulo, multiple, padding=0, style }, onProgress }: RenderMircleArgs) {
   console.debug('Preparing canvas...')
   const ctx = initCanvas({ canvas, size, alpha: true })
 
@@ -112,12 +113,22 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
     console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
   }
 
-  console.debug('Drawing background...')
-  // Note: Making this gradient took a lot of finagling... be warned
-  ctx.globalCompositeOperation = 'source-over'
-  drawGradientCircle({ ctx, radius, gradient: { 0: '#11F8', 1: '#F001' } })
-  drawGradientCircle({ ctx, radius, gradient: { 0.5: '#0000', 1: '#F0F4' } })
-  drawGradientCircle({ ctx, radius, gradient: { 0: '#FA1', 0.5: '#1850' } })
+  if (style === 'plain') {
+    styledLines = styledLines.map(line => {
+      const alphaPart = line.color?.split('/').at(-1) || ' 1)'
+      return { ...line, color: `rgb(255 255 255 /${alphaPart}`, thickness: 1 }
+    })
+    accentLines = []
+  }
+
+  if (style === 'fancy') {
+    console.debug('Drawing background...')
+    // Note: Making this gradient took a lot of finagling... be warned
+    ctx.globalCompositeOperation = 'source-over'
+    drawGradientCircle({ ctx, radius, gradient: { 0: '#11F8', 1: '#F001' } })
+    drawGradientCircle({ ctx, radius, gradient: { 0.5: '#0000', 1: '#F0F4' } })
+    drawGradientCircle({ ctx, radius, gradient: { 0: '#FA1', 0.5: '#1850' } })
+  }
 
   console.debug('Drawing lines...')
   ctx.globalCompositeOperation = 'lighter' // colors are added together (ex: #808 + #FF0 = #FF8)
@@ -127,27 +138,33 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
     onProgress: progress => onProgress && onProgress(progress.current / (styledLines.length + accentLines.length)),
   })
 
-  console.debug('Shading...')
-  ctx.globalCompositeOperation = 'source-atop' // draw new content within old content (as if the old content reveals the new content)
-  drawGradientCircle({ ctx, radius, gradient: { 0.6: '#0000', 1: '#000' } })
+  if (style === 'fancy') {
+    console.debug('Shading...')
+    ctx.globalCompositeOperation = 'source-atop' // draw new content within old content (as if the old content reveals the new content)
+    drawGradientCircle({ ctx, radius, gradient: { 0.6: '#0000', 1: '#000' } })
+  }
 
-  console.debug('Drawing accents...')
-  ctx.globalCompositeOperation = 'lighter'
-  drawLines({
-    ctx,
-    lines: accentLines,
-    onProgress: progress => onProgress && onProgress((progress.current + styledLines.length) / (styledLines.length + accentLines.length)),
-  })
+  if (style === 'fancy') {
+    console.debug('Drawing accents...')
+    ctx.globalCompositeOperation = 'lighter'
+    drawLines({
+      ctx,
+      lines: accentLines,
+      onProgress: progress => onProgress && onProgress((progress.current + styledLines.length) / (styledLines.length + accentLines.length)),
+    })
+  }
 
   // console.debug('Inverting...')
   // ctx.globalCompositeOperation = 'difference'
   // draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius, color: '#FFF' })
 
   console.debug('Cropping...')
-  ctx.globalCompositeOperation = 'destination-in' // crop old content to new content (as if new content defines the shape)
-  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius - 1, color: '#000' })
   ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
   drawBackground({ ctx, color: '#000' })
+  ctx.globalCompositeOperation = 'destination-in' // crop old content to new content (as if new content defines the shape)
+  draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius - 1, color: '#000' })
+  // ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
+  // drawBackground({ ctx, color: '#000' })
 }
 
 function computeDensityMultiplier(lines: MircleLine[], radius: number, densityTarget: number) {

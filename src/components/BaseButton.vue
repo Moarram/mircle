@@ -64,7 +64,7 @@ input[type="button"] {
   padding: .2em .5em;
   font-family: inherit;
   font-size: inherit;
-  color: #000D;
+  color: #000C;
   background: var(--color-background);
   border: none;
   border-radius: 5px;
@@ -89,6 +89,7 @@ input[type="button"] {
     background: var(--color-background-disabled);
     border-color: var(--color-border-disabled);
     box-shadow: 0 2px 0 0 var(--color-border-disabled);
+    transition: background .2s, color .2s;
   }
 
 }

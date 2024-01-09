@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { storeToRefs} from 'pinia'
 import { useStore } from '@/store'
 import { group, primeFactors } from '@/utils';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import BaseButton from './BaseButton.vue';
 import BaseCheckbox from './BaseCheckbox.vue';
 import BaseNumber from './BaseNumber.vue';
@@ -13,11 +14,22 @@ const factorsHtml = computed(() => {
   if (!factors.length) return ['']
   const grouped = group(factors, n => n)
   const powered = [...grouped.entries()].map(([factor, items]) => items.length > 1 ? `${factor}<sup>${items.length}</sup>` : factor)
-  return powered.join('\u200B×')
+  return `= ${powered.join('\u200B×')}`
 })
 
 const localMultiple = ref(2)
 const expanded = ref(false)
+
+function setMultiple(val: number) {
+  localMultiple.value = val // TODO stop getting confused by this local variable
+  store.multiple = val
+}
+
+watch([storeToRefs(store).modulo], () => {
+  if (localMultiple.value > store.modulo) {
+    localMultiple.value = store.modulo
+  }
+})
 
 </script>
 
@@ -25,7 +37,7 @@ const expanded = ref(false)
   <div id="layout">
 
     <div style="width: 100%; display: flex; justify-content: space-between;">
-      <div class="param">
+      <div class="param" title="The number of points around the circle">
         <label for="modulo">Vertices:</label>
         <BaseNumber
           id="modulo"
@@ -35,40 +47,45 @@ const expanded = ref(false)
           :max="store.multiple === 'all' ? 999 : 99999"
           :step="1"
         />
-        <div class="detail" style="min-width: 8rem;" v-html="factorsHtml"></div>
-        <!-- <div class="detail">
-          ({{ lines }}&nbsp;lines)
-        </div> -->
+        <div class="detail" title="Prime factorization" style="min-width: 8rem;" v-html="factorsHtml"></div>
       </div>
-      <BaseButton content="Options" @click="expanded = !expanded" :engaged="expanded" />
+      <BaseButton
+        content="Options"
+        :title="expanded ? 'Hide options' : 'More options'"
+        @click="expanded = !expanded"
+        :engaged="expanded"
+      />
     </div>
 
     <div v-if="expanded">
-      <div class="param" style="margin-top: 1rem;">
-        <label for="multiple">Multiple:</label>
-        <div class="ctrl">
-          <BaseCheckbox
-            id="all-multiples"
-            :model-value="store.multiple === 'all'"
-            @update:model-value="val => val ? store.multiple = 'all' : store.multiple = localMultiple"
-            style="margin: .5rem"
-          />
-          <label for="all-multiples">All</label>
-        </div>
+      <div class="param" title="Optionally show a single layer (instead of all)" style="margin-top: 1rem;">
+        <BaseCheckbox
+          id="do-multiple"
+          :model-value="store.multiple !== 'all'"
+          @update:model-value="val => !val ? store.multiple = 'all' : store.multiple = localMultiple"
+          style="margin: .5rem;"
+        />
+        <label for="do-multiple" :style="{ color: store.multiple === 'all' ? '#DDD8' : '#FFFC'}">Layer:</label>
         <BaseNumber
           id="multiple"
-          v-if="store.multiple !== 'all'"
           :model-value="localMultiple"
-          @update:model-value="val => {
-            localMultiple = val
-            store.multiple = val
-          }"
+          @update:model-value="val => setMultiple(val)"
           :min="0"
           :max="store.specification.modulo"
           :step="1"
+          :disabled="store.multiple === 'all'"
         />
       </div>
-      <div class="param" style="margin-top: 1rem; max-width: 100%;">
+      <div style="width: 100%; margin-top: 1rem; border-bottom: 1px solid #333;"></div>
+      <div class="param" style="margin-top: 1rem;">
+        <div style="margin-right: .5rem;">Style:</div>
+        <div>
+          <BaseButton content="Fancy" @click="store.style = 'fancy'" :engaged="store.style === 'fancy'" :border-right="true" :square-right="true" />
+          <!-- <BaseButton content="2000" @click="store.size = 2000" :engaged="store.size === 2000" :border-right="true" :square-right="true" :square-left="true" /> -->
+          <BaseButton content="Plain" @click="store.style = 'plain'" :engaged="store.style === 'plain'" :square-left="true" />
+        </div>
+      </div>
+      <div class="param" title="The width and height of the image (it's a square)" style="margin-top: 1rem; max-width: 100%;">
         <label for="size">Image size:</label>
         <div>
           <BaseButton content="Auto" @click="store.size = 'auto'" :engaged="store.size === 'auto'" :border-right="true" :square-right="true" />
@@ -84,7 +101,7 @@ const expanded = ref(false)
           :max="16384"
           style="margin-left: 1em;"
         />
-        <div style="padding-left: .3em;">px<sup>2</sup></div>
+        <div style="padding-left: .3em;">px</div>
       </div>
     </div>
 
