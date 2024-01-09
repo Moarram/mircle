@@ -71,7 +71,7 @@ export function layoutGroupedMircle({ modulo, radius, origin={x:0,y:0} }: Layout
     ...computeLine({ connection, modulo, radius, origin }),
   }))
 
-  return groupedLines
+  return groupedLines.sort((a, b) => a.multiples.length - b.multiples.length)
 }
 
 type ComputeConnectionsArgs = {

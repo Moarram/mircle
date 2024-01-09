@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, toRaw } from 'vue';
-import { store } from '@/store';
+import { useStore } from '@/store';
 import { createMircle } from '@/mircle/mircle'
 import { AbortError, delayFrames, downloadCanvas } from '@/utils';
 
@@ -11,12 +11,14 @@ defineExpose({
   rerender,
 })
 
+const store = useStore()
+
 let controller: AbortController | undefined
 let canvas: HTMLCanvasElement
 
 const isError = ref<boolean>()
 
-// TODO track down bugs in Safari (gradient & line width incompatible, no bitmap over 3840px)
+// TODO track down bugs in Safari (gradient & line width incompatible, no bitmap over 3840px square)
 
 // Cancel an ongoing render
 function abort() {
@@ -25,30 +27,26 @@ function abort() {
 
 // Download the canvas contents
 async function download() {
-  store.isDownloading = true
+  store.activity = 'download'
   await delayFrames(1) // give ui a chance to update
-  const mult = store.layout.multiple ? `x${store.layout.multiple}` : ''
-  const filename = `mircle${store.layout.modulo}${mult}.png`
+  const mult = store.specification.multiple ? `x${store.specification.multiple}` : ''
+  const filename = `mircle${store.specification.modulo}${mult}.png`
   await downloadCanvas(canvas, filename)
-  store.isDownloading = false
+  store.activity = null
 }
 
 // Render the mircle
 async function render() {
-  store.isRendering = true
+  store.activity = 'render'
   store.renderProgress = 0
   isError.value = false
 
   controller = new AbortController()
 
   try {
-    const layout = toRaw(store.layout)
     await createMircle({
       canvas,
-      specification: {
-        ...layout,
-        padding: layout.size / 100, // 1% margin
-      },
+      specification: toRaw(store.specification),
       onProgress: p => store.renderProgress = p,
       signal: toRaw(controller.signal)
     })
@@ -63,14 +61,14 @@ async function render() {
   }
 
   controller = undefined
-  store.isRendering = false
+  store.activity = null
 }
 
 // Cancel any ongoing render and then render again
 async function rerender() {
-  if (store.isRendering) abort()
+  if (store.activity === 'render') abort()
   await delayFrames(1) // give ui a chance to update
-  if (!store.isDownloading) render()
+  if (store.activity !== 'download') render()
 }
 
 onMounted(() => {
@@ -83,7 +81,7 @@ onMounted(() => {
     <canvas id="mircle" :class="{ hide: isError }" />
     <div v-if="isError" id="err" class="center">
       <div>ERROR</div>
-      <div v-if="store.layout.size > 4000">(Image is probably too large)</div>
+      <div v-if="store.specification.size > 4000">(Image is probably too large)</div>
     </div>
   </div>
 </template>

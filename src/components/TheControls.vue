@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { store } from '@/store'
+import { useStore } from '@/store'
 import BaseButton from './BaseButton.vue';
 import BaseCheckbox from './BaseCheckbox.vue';
 
@@ -9,21 +9,23 @@ const emit = defineEmits<{
   download: [],
 }>()
 
+const store = useStore()
+
 </script>
 
 <template>
   <div id="controls">
     <BaseButton
-      @click="store.isRendering ? emit('abort') : emit('render')"
-      :disabled="store.isDownloading"
-      :content="store.isRendering ? 'Cancel' : 'Render'"
-      :style="store.isRendering ? 'color: #B00' : ''"
+      @click="store.activity === 'render' ? emit('abort') : emit('render')"
+      :disabled="store.activity === 'download'"
+      :content="store.activity === 'render' ? 'Cancel' : 'Render'"
+      :style="store.activity === 'render' ? 'color: #B00' : ''"
       :large="true"
       class="ctrl"
     />
     <BaseButton
       @click="emit('download')"
-      :disabled="store.isRendering || store.isDownloading"
+      :disabled="store.activity === 'render' || store.activity === 'download'"
       :large="true"
       class="ctrl"
       content="Download"
@@ -31,7 +33,7 @@ const emit = defineEmits<{
     <div class="ctrl">
       <BaseCheckbox
         id="auto-render"
-        v-model="store.options.autoRender"
+        v-model="store.autoRender"
         style="margin: .5rem"
       />
       <label for="auto-render">Auto-render</label>

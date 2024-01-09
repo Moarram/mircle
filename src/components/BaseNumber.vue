@@ -8,6 +8,7 @@ const props = defineProps<{
   min?: number,
   max?: number,
   step?: number,
+  disabled?: boolean,
 }>()
 
 const emit = defineEmits<{
@@ -36,7 +37,7 @@ function onChange(event: Event) {
       v-if="props.step"
       content="-"
       @click="emit('update:modelValue', constrain(props.modelValue - props.step))"
-      :disabled="props.min !== undefined && props.modelValue <= props.min"
+      :disabled="props.disabled || props.min !== undefined && props.modelValue <= props.min"
       :square-right="true"
     />
     <input
@@ -45,12 +46,13 @@ function onChange(event: Event) {
       :value="props.modelValue"
       @change="onChange"
       @focus="event => (event.target as HTMLInputElement).select()"
+      :disabled="props.disabled"
     />
     <BaseButton
       v-if="props.step"
       content="+"
       @click="emit('update:modelValue', constrain(props.modelValue + props.step))"
-      :disabled="props.max !== undefined && props.modelValue >= props.max"
+      :disabled="props.disabled || props.max !== undefined && props.modelValue >= props.max"
       :square-left="true"
     />
   </div>

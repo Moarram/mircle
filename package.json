@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@moarram/util": "git+ssh://git@github.com:moarram/util-js.git",
+    "pinia": "^2.1.7",
     "vue": "^3.3.4"
   },
   "devDependencies": {

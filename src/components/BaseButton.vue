@@ -19,7 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const style = computed(() => {
-  const color = props.color || '#CCC'
+  const color = props.color || '#BBB'
   return {
     '--color-background': color,
     '--color-background-engaged': new Colorful(color).mix('#FFF', .6).hex,

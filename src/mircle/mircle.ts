@@ -1,4 +1,4 @@
-import { layoutGroupedMircle } from './layout'
+import { layoutGroupedMircle, layoutMircle, type GroupedMircleLine, type MircleLine, type Line } from './layout'
 import { initCanvas, drawGradientCircle, drawLines, drawBackground, type StyledLine } from './draw'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { AbortError, delayFrames, group, primeFactors, statistics } from '@/utils'
@@ -91,66 +91,26 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   console.debug('Preparing canvas...')
   const ctx = initCanvas({ canvas, size, alpha: true })
 
-  console.debug('Computing layout...')
+  console.debug('Computing lines...')
   const radius = (size - padding * 2) / 2
-  const mircleLines = layoutGroupedMircle({ modulo, radius })
-    .sort((a, b) => a.multiples.length - b.multiples.length)
-    // .sort((a, b) => math.distance(a.pos, a.pos2) - math.distance(b.pos, b.pos2))
 
-  const lineRadiusStats = statistics(mircleLines.map(line => math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2))))
-  const lineDistanceStats = statistics(mircleLines.map(line => math.distance(line.pos, line.pos2)))
+  let styledLines: StyledLine[] = []
+  let accentLines: StyledLine[] = []
 
-  const mircleLinesByStack = group(mircleLines, line => line.multiples.length) // maps stack to lines
-  const stacks = [...mircleLinesByStack.keys()].sort((a, b) => a - b) // ascending order
-  const stackStats = statistics(stacks)
-  const stackDistances = new Map(Array.from(mircleLinesByStack).map(([stack, lines]) => [stack, lines.reduce((acc, line) => acc + math.distance(line.pos, line.pos2), 0)])) // map: stack -> distance
+  if (multiple === undefined) { // all multiples
+    const mircleLines = layoutGroupedMircle({ modulo, radius })
+    const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 10)
+    styledLines = styleGroupedMircleLines(mircleLines, densityMultiplier)
+    accentLines = accentGroupedMircleLines(mircleLines, densityMultiplier)
+    console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
 
-  console.debug(stacks)
-
-  const density = lineDistanceStats.sum / (Math.PI * radius ** 2) // average number of lines over each pixel
-  const densityTarget = 10 // desired density
-  const densityMultiplier = math.clamp(densityTarget / density, 0.01, 10) // multiplier to reach target
-  console.debug(densityMultiplier)
-
-  console.debug('Computing styles...')
-  const styledLines: StyledLine[] = []
-  const accentLines: StyledLine[] = []
-  mircleLines.forEach(line => {
-    // const angle = math.angle(line.pos, line.pos2)
-    // const verticalPercent = Math.sin(angle) ** 6
-    // const horizontalPercent = Math.cos(angle) ** 6
-    // const diagonalPercent = 1 - Math.max(verticalPercent, horizontalPercent) * 0.7
-
-    const lineRadius = math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2))
-    const lineRadiusPercent = lineRadius / lineRadiusStats.max
-
-    const lineDistance = math.distance(line.pos, line.pos2)
-    const lineDistancePercent = lineDistance / lineDistanceStats.max // 0=short 1=long
-
-    const stack = line.multiples.length // how many multiples define this line
-    const stackMaxPercent = stack / stackStats.max
-    const stackIndexPercent = stacks.length > 1 ? (stacks.indexOf(stack) / (stacks.length - 1)) : 0
-    const stackSize = (mircleLinesByStack.get(stack)||[]).length // how many lines have this same number of multiples
-    const stackSizePercent = stackSize / mircleLines.length
-
-    // const isStackPrime = primeFactors(stack).length === 1
-    // const isModuloPrime = primeFactors(modulo).length === 1
-
-    const w = 1 + (stackMaxPercent * 0.5 + stackIndexPercent * 0.5) * densityMultiplier
-
-    const l = (1 - lineRadiusPercent) * 0.7 + 0.3
-    const h = (1 - lineDistancePercent ** 9) * 100 + 170
-    const a = math.clamp((stackMaxPercent * (1 - stackSizePercent) * 0.9 + 0.02 * densityMultiplier), 0, 1)
-
-    styledLines.push({ ...line, color: `oklch(${l} 0.5 ${h} / ${a})`, thickness: w })
-
-    const dampen = (253/255 - stackSizePercent * math.clamp(modulo / 50, 0, 1)) ** 4 + 2/255 // reduce opacity when lots of lines in stack (namely prime numbers)
-    const a2 = math.clamp(stackMaxPercent ** 1.6, 0, 1) * dampen
-
-    if (a2 >= 1 / 255) {
-      accentLines.push({ ...line, color: `rgb(255 25 25 / ${a2})`, thickness: w })
-    }
-  })
+  } else { // specific multiple
+    const mircleLines = layoutMircle({ modulo, multiple, radius })
+    const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 1)
+    styledLines = styleMircleLines(mircleLines, densityMultiplier)
+    accentLines = styledLines.map(line => ({ ...line, color: `rgb(255 25 25 / ${densityMultiplier * 0.5})` }))
+    console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
+  }
 
   console.debug('Drawing background...')
   // Note: Making this gradient took a lot of finagling... be warned
@@ -188,4 +148,110 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius - 1, color: '#000' })
   ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
   drawBackground({ ctx, color: '#000' })
+}
+
+function computeDensityMultiplier(lines: MircleLine[], radius: number, densityTarget: number) {
+  const totalDistance = statistics(lines.map(line => math.distance(line.pos, line.pos2))).sum
+  const density = totalDistance / (Math.PI * radius ** 2) // average number of lines over each pixel
+  return math.clamp(densityTarget / (density + 1), 0.01, 10) // multiplier to reach target density
+}
+
+type LineInfo = {
+  radius: number, // distance from center of circle to midpoint of line
+  radiusPercent: number, // percent of max radius
+  distance: number, // length of line
+  distancePercent: number, // percent of max distance
+}
+function withLineInfo<T>(lines: (Line & T)[]): (Line & T & LineInfo)[] {
+  const radiusStats = statistics(lines.map(line => math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2))))
+  const distanceStats = statistics(lines.map(line => math.distance(line.pos, line.pos2)))
+  return lines.map(line => {
+    const radius = math.distance({ x: 0, y: 0 }, math.midpoint(line.pos, line.pos2))
+    const radiusPercent = radius / radiusStats.max
+    const distance = math.distance(line.pos, line.pos2)
+    const distancePercent = distance / distanceStats.max
+    return { ...line, radius, radiusPercent, distance, distancePercent }
+  })
+}
+
+type StackInfo = {
+  stack: number, // how many multiples define this line
+  stackMaxPercent: number, // percent of max stack value
+  stackIndexPercent: number, // percent of last index
+  stackSize: number, // how many lines have this same number of multiples
+  stackSizePercent: number, // percent of lines with this same number of multiples
+}
+function withStackInfo(lines: GroupedMircleLine[]): (GroupedMircleLine & StackInfo)[] {
+  const linesByStack = group(lines, line => line.multiples.length) // maps stack to lines
+  const stacks = [...linesByStack.keys()].sort((a, b) => a - b) // ascending order
+  const stackStats = statistics(stacks)
+  return lines.map(line => {
+    const stack = line.multiples.length // how many multiples define this line
+    const stackMaxPercent = stack / stackStats.max
+    const stackIndexPercent = stacks.length > 1 ? (stacks.indexOf(stack) / (stacks.length - 1)) : 0
+    const stackSize = (linesByStack.get(stack)||[]).length // how many lines have this same number of multiples
+    const stackSizePercent = stackSize / lines.length
+    return { ...line, stack, stackMaxPercent, stackIndexPercent, stackSize, stackSizePercent }
+  })
+}
+
+function styleMircleLines(lines: MircleLine[], densityMultiplier: number): StyledLine[] {
+  const result: StyledLine[] = []
+  withLineInfo(lines).forEach(line => {
+    const { radiusPercent, distancePercent } = line
+
+    const l = (1 - radiusPercent) * 0.7 + 0.3
+    const h = (1 - distancePercent ** 9) * 100 + 170
+    const a = math.clamp((0.05 + 0.3 * densityMultiplier), 0, 1)
+    const w = 1 + 0.5 * densityMultiplier
+
+    result.push({
+      pos: line.pos,
+      pos2: line.pos2,
+      color: `oklch(${l} 0.5 ${h} / ${a})`,
+      thickness: w,
+    })
+  })
+  return result
+}
+
+function styleGroupedMircleLines(lines: GroupedMircleLine[], densityMultiplier: number): StyledLine[] {
+  const result: StyledLine[] = []
+  withLineInfo(withStackInfo(lines)).forEach(line => {
+    const { radiusPercent, distancePercent, stackMaxPercent, stackIndexPercent, stackSizePercent } = line
+
+    const l = (1 - radiusPercent) * 0.7 + 0.3
+    const h = (1 - distancePercent ** 9) * 100 + 170
+    const a = math.clamp((stackMaxPercent * (1 - stackSizePercent) * 0.9 + 0.02 * densityMultiplier), 0, 1)
+    const w = 1 + (stackMaxPercent * 0.5 + stackIndexPercent * 0.5) * densityMultiplier
+
+    result.push({
+      pos: line.pos,
+      pos2: line.pos2,
+      color: `oklch(${l} 0.5 ${h} / ${a})`,
+      thickness: w,
+    })
+  })
+  return result
+}
+
+function accentGroupedMircleLines(lines: GroupedMircleLine[], densityMultiplier: number): StyledLine[] {
+  const result: StyledLine[] = []
+  withLineInfo(withStackInfo(lines)).forEach(line => {
+    const { stackMaxPercent, stackIndexPercent, stackSizePercent } = line
+
+    const adjust = (253/255 - stackSizePercent * math.clamp(lines.length / 1500, 0, 1)) ** 4 + 2/255 // reduce opacity when lots of lines in stack (namely prime numbers) and increase when low number of total lines (1500 is around mod 50)
+    const a = math.clamp(stackMaxPercent ** 1.6, 0, 1) * adjust
+    const w = 1 + (stackMaxPercent * 0.5 + stackIndexPercent * 0.5) * densityMultiplier
+
+    if (a >= 1 / 255) {
+      result.push({
+        pos: line.pos,
+        pos2: line.pos2,
+        color: `rgb(255 25 25 / ${a})`,
+        thickness: w,
+      })
+    }
+  })
+  return result
 }

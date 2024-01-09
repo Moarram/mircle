@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import { store } from './store';
+import { computed, onMounted, ref, watch } from 'vue';
+import { storeToRefs} from 'pinia'
+import { useStore } from './store';
 import TheMircle from '@/components/TheMircle.vue'
 import TheControls from './components/TheControls.vue';
 import TheLayout from './components/TheLayout.vue';
 // import TheStyle from './components/TheStyle.vue';
 import ProgressBar from './components/ProgressBar.vue';
 import { delayFrames } from './utils';
+
+const store = useStore()
 
 const mircle = ref<InstanceType<typeof TheMircle>>()
 
@@ -18,17 +21,22 @@ if (import.meta.hot) {
 }
 
 onMounted(() => {
-  // set initial size relative to display
-  const ratio = window.devicePixelRatio || 1
-  const size = Math.min(window.innerWidth, window.innerHeight) * ratio
-  store.layout.size = size - 20 * ratio
+  mircle.value?.render()
 })
 
-watch([store.layout, store.options], () => {
+const { specification, autoRender } = storeToRefs(store)
+watch([specification, autoRender], () => {
   // re-render when options change
-  if (store.options.autoRender) {
+  if (store.autoRender) {
     mircle.value?.rerender()
   }
+})
+
+const progressText = computed(() => {
+  if (store.activity !== 'render') return 'Done!'
+  const mod = store.specification.modulo // alias
+  const lines = store.specification.multiple ? mod : (mod * (mod - 1)) / 2
+  return `Rendering ${lines} lines...`
 })
 
 </script>
@@ -43,8 +51,12 @@ watch([store.layout, store.options], () => {
       <div style="width: calc(100% - 1rem); margin: .5rem; border-bottom: 1px solid #333;"></div>
       <TheControls @render="mircle?.rerender" @abort="mircle?.abort" @download="mircle?.download" />
       <!-- <TheStyle /> -->
-      <div style="position: absolute; bottom: -2rem; left: 1rem; right: 1rem">
-        <ProgressBar v-if="store.isRendering" :percent="store.renderProgress" />
+      <div
+        style="position: absolute; bottom: -2rem; left: 1rem; right: 1rem; transition: opacity 1s ease-in;"
+        :style="{ opacity: store.activity === 'render' ? 1 : 0 }"
+      >
+        <ProgressBar :percent="store.renderProgress" />
+        <div style="position: absolute; margin-top: .5rem; color: #FFFC">{{ progressText }}</div>
       </div>
     </div>
   </main>
