@@ -119,7 +119,7 @@ body {
 }
 
 a {
-  color: #38F;
+  color: #49F;
   text-decoration: none;
 
   &:hover {
@@ -127,7 +127,7 @@ a {
   }
 
   &:visited {
-    color: #38F;
+    color: #49F;
   }
 }
 </style>

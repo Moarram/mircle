@@ -36,7 +36,7 @@ watch([storeToRefs(store).modulo], () => {
 <template>
   <div id="layout">
 
-    <div style="width: 100%; display: flex; justify-content: space-between;">
+    <div style="width: 100%; display: flex; align-items: flex-start; justify-content: space-between;">
       <div class="param" title="The number of points around the circle">
         <label for="modulo">Vertices:</label>
         <BaseNumber
@@ -54,10 +54,12 @@ watch([storeToRefs(store).modulo], () => {
         :title="expanded ? 'Hide options' : 'More options'"
         @click="expanded = !expanded"
         :engaged="expanded"
+        style="margin-left: .5rem"
       />
     </div>
 
     <div v-if="expanded">
+      <div style="width: 100%; margin-top: 1rem; border-bottom: 1px solid #333;"></div>
       <div class="param" title="Optionally show a single layer (instead of all)" style="margin-top: 1rem;">
         <BaseCheckbox
           id="do-multiple"
@@ -76,7 +78,6 @@ watch([storeToRefs(store).modulo], () => {
           :disabled="store.multiple === 'all'"
         />
       </div>
-      <div style="width: 100%; margin-top: 1rem; border-bottom: 1px solid #333;"></div>
       <div class="param" style="margin-top: 1rem;">
         <div style="margin-right: .5rem;">Style:</div>
         <div>

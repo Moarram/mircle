@@ -24,12 +24,56 @@ export type LayoutMircleArgs = {
   origin?: Position, // center of circle
 }
 export function layoutMircle({ modulo, multiple, radius, origin={x:0,y:0} }: LayoutMircleArgs): MircleLine[] {
-  const connections = computeConnections({ modulo, multiple })
-  const lines = connections.map(connection => ({
-    ...connection,
-    ...computeLine({ connection, modulo, radius, origin })
-  }))
-  return lines
+  const result: MircleLine[] = []
+  for (let start = 0; start < modulo; start++) {
+    const end = (start * multiple) % modulo // compute connection
+    result.push({
+      start,
+      end,
+      ...computeLine({ connection: { start, end }, modulo, radius, origin })
+    })
+  }
+  return result
+}
+
+export function layoutSparseGroupedMircle({ modulo, multiple, radius, origin={x:0,y:0} }: LayoutMircleArgs): GroupedMircleLine[] {
+  const groups: Map<number,Set<number>>[] = [] // maps start -> end -> multiples
+  for (let start = 0; start < modulo; start++) {
+    groups.push(new Map()) // maps end -> multiples
+  }
+
+  const desiredConnections: number[] = [] // maps start -> end
+  for (let start = 0; start < modulo; start++) {
+    const end = (start * multiple) % modulo // compute connection
+    desiredConnections[start] = end
+  }
+
+  for (let m = 0; m < modulo; m++) {
+    for (let start = 0; start < modulo; start++) {
+      const end = (start * m) % modulo // compute connection
+      const desiredEnd = desiredConnections[start]
+      if (end !== desiredEnd) continue // ignore undesired connections
+      const ends = groups[start]
+      if (!ends.has(end)) ends.set(end, new Set())
+      ends.get(end)?.add(m)
+    }
+  }
+
+  const result: GroupedMircleLine[] = []
+  for (let start = 0; start < modulo; start++) {
+    const ends = groups[start]
+    for (const [end, multiples] of ends) {
+      if (start === end) continue // omit loops
+      result.push({
+        start,
+        end,
+        multiples: Array.from(multiples),
+        ...computeLine({ connection: { start, end }, modulo, radius, origin }),
+      })
+    }
+  }
+
+  return result.sort((a, b) => a.multiples.length - b.multiples.length)
 }
 
 export type LayoutGroupedMircleArgs = {
@@ -38,53 +82,35 @@ export type LayoutGroupedMircleArgs = {
   origin?: Position, // center of circle
 }
 export function layoutGroupedMircle({ modulo, radius, origin={x:0,y:0} }: LayoutGroupedMircleArgs): GroupedMircleLine[] {
-  // TODO re-write to use Map() and group util
-  const connectionsByMultiple: Record<number, MircleConnection[]> = {}
-  for (let multiple = 0; multiple < modulo; multiple++) {
-    connectionsByMultiple[multiple] = computeConnections({ modulo, multiple })
-  }
-
-  const groups: Record<number,Record<number,number[]>> = {} // maps start -> end -> [multiples]
-  Object.entries(connectionsByMultiple).forEach(([key, connections]) => {
-    const multiple = parseFloat(key)
-    connections.forEach(({ start, end }) => {
-      if (!(start in groups)) groups[start] = {}
-      if (!(end in groups[start])) groups[start][end] = []
-      if (groups[start][end].includes(multiple)) return // continue
-      groups[start][end].push(multiple)
-    })
-  })
-
-  const groupedConnections: GroupedMircleConnection[] = []
-  Object.entries(groups).forEach(([startKey, endVal]) => {
-    Object.entries(endVal).forEach(([endKey, multiples]) => {
-      groupedConnections.push({
-        start: parseFloat(startKey),
-        end: parseFloat(endKey),
-        multiples,
-      })
-    })
-  })
-
-  const groupedLines = groupedConnections.map(connection => ({
-    ...connection,
-    ...computeLine({ connection, modulo, radius, origin }),
-  }))
-
-  return groupedLines.sort((a, b) => a.multiples.length - b.multiples.length)
-}
-
-type ComputeConnectionsArgs = {
-  modulo: number,
-  multiple: number,
-}
-function computeConnections({ modulo, multiple }: ComputeConnectionsArgs): MircleConnection[] {
-  const connections = []
+  const groups: Map<number,Set<number>>[] = [] // maps start -> end -> multiples
   for (let start = 0; start < modulo; start++) {
-    const end = (start * multiple) % modulo
-    if (start !== end) connections.push({ start, end })
+    groups.push(new Map()) // maps end -> multiples
   }
-  return connections
+
+  for (let m = 0; m < modulo; m++) {
+    for (let start = 0; start < modulo; start++) {
+      const end = (start * m) % modulo // compute connection
+      const ends = groups[start]
+      if (!ends.has(end)) ends.set(end, new Set())
+      ends.get(end)?.add(m)
+    }
+  }
+
+  const result: GroupedMircleLine[] = []
+  for (let start = 0; start < modulo; start++) {
+    const ends = groups[start]
+    for (const [end, multiples] of ends) {
+      if (start === end) continue // omit loops
+      result.push({
+        start,
+        end,
+        multiples: Array.from(multiples),
+        ...computeLine({ connection: { start, end }, modulo, radius, origin }),
+      })
+    }
+  }
+
+  return result.sort((a, b) => a.multiples.length - b.multiples.length)
 }
 
 type ComputeLineArgs = {

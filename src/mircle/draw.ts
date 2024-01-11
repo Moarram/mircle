@@ -1,4 +1,4 @@
-import { draw, math, type Position } from '@moarram/util'
+import { draw, type Position } from '@moarram/util'
 import type { Progress } from '../types'
 
 export type InitCanvasArgs = {

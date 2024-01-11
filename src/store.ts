@@ -8,18 +8,28 @@ export type StoreState = {
   padding: number | 'auto',
   autoRender: boolean,
   style: 'fancy' | 'plain',
+  crop: boolean,
   activity: 'render' | 'download' | null,
   renderProgress: number,
 }
+
+// TODO ui toggle for crop
+// TODO vertex labels
+// TODO consider modes if planning to animate:
+//  grouped mircle (all mults within mod, made to look cool)
+//  mircle (single mult, made to look cool and explain)
+//  animated mircle (changing mult, made for speed)
+//  about (some kind of explainer with labels, colors, animations, etc... could just be images in readme?)
 
 export const useStore = defineStore('store', {
   state: (): StoreState => ({
     modulo: 100,
     multiple: 'all',
     size: 'auto',
-    padding: 0,//'auto',
+    padding: 'auto',
     autoRender: true,
     style: 'fancy',
+    crop: true,
     activity: null,
     renderProgress: 0,
   }),
@@ -30,7 +40,7 @@ export const useStore = defineStore('store', {
       const autoSize = (Math.min(window.innerWidth, window.innerHeight) - 20) * window.devicePixelRatio || 1
       const size = state.size === 'auto' ? autoSize : state.size
       const padding = state.padding === 'auto' ? size / 100 : state.padding
-      return { modulo, multiple, size, padding, style: state.style }
+      return { modulo, multiple, size, padding, style: state.style, crop: state.crop }
     },
   },
   actions: {},

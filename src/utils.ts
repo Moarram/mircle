@@ -1,5 +1,4 @@
 import type { Position } from "@moarram/util";
-import type { Line } from "./mircle/layout";
 
 /** An ongoing activity has been cancelled */
 export class AbortError extends Error {}

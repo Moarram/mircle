@@ -1,8 +1,8 @@
-import { layoutGroupedMircle, layoutMircle, type GroupedMircleLine, type MircleLine, type Line } from './layout'
+import { layoutGroupedMircle, layoutMircle, type GroupedMircleLine, type MircleLine, type Line, layoutSparseGroupedMircle } from './layout'
 import { initCanvas, drawGradientCircle, drawLines, drawBackground, type StyledLine } from './draw'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { AbortError, delayFrames, group, primeFactors, statistics } from '@/utils'
-import { Colorful, draw, math } from '@moarram/util'
+import { draw, math } from '@moarram/util'
 
 export type CreateMircleArgs = {
   canvas: HTMLCanvasElement,
@@ -80,7 +80,8 @@ export type MircleSpecification = {
   modulo: number, // number of points
   multiple?: number, // optional specific multiple, otherwise all
   padding?: number,
-  style?: 'fancy' | 'plain'
+  style?: 'fancy' | 'plain',
+  crop?: boolean, // whether to crop image to circle
 }
 export type RenderMircleArgs = {
   canvas: HTMLCanvasElement | OffscreenCanvas, // destination canvas
@@ -88,7 +89,7 @@ export type RenderMircleArgs = {
   onProgress?: (progressPercent: number) => void,
 }
 // Render mircle on canvas
-export function renderMircle({ canvas, specification: { size, modulo, multiple, padding=0, style }, onProgress }: RenderMircleArgs) {
+export function renderMircle({ canvas, specification: { size, modulo, multiple, padding=0, style, crop }, onProgress }: RenderMircleArgs) {
   console.debug('Preparing canvas...')
   const ctx = initCanvas({ canvas, size, alpha: true })
 
@@ -106,17 +107,26 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
     console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
 
   } else { // specific multiple
-    const mircleLines = layoutMircle({ modulo, multiple, radius })
-    const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 1)
-    styledLines = styleMircleLines(mircleLines, densityMultiplier)
-    accentLines = styledLines.map(line => ({ ...line, color: `rgb(255 25 25 / ${densityMultiplier * 0.5})` }))
+    const mircleLines = layoutSparseGroupedMircle({ modulo, multiple, radius })
+    const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 10)
+    styledLines = styleGroupedMircleLines(mircleLines, densityMultiplier)
+    accentLines = accentGroupedMircleLines(mircleLines, densityMultiplier)
     console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
+
+    // TODO option to toggle methods?
+    // TODO fix exaggerated lines (too many too thick)
+
+    // const mircleLines = layoutMircle({ modulo, multiple, radius })
+    // const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 1)
+    // styledLines = styleMircleLines(mircleLines, densityMultiplier)
+    // accentLines = styledLines.map(line => ({ ...line, color: `rgb(255 25 25 / ${densityMultiplier * 0.5})` }))
+    // console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
   }
 
   if (style === 'plain') {
     styledLines = styledLines.map(line => {
       const alphaPart = line.color?.split('/').at(-1) || ' 1)'
-      return { ...line, color: `rgb(255 255 255 /${alphaPart}`, thickness: 1 }
+      return { ...line, color: `rgb(255 255 255 /${alphaPart}` }
     })
     accentLines = []
   }
@@ -159,12 +169,14 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   // draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius, color: '#FFF' })
 
   console.debug('Cropping...')
-  ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
-  drawBackground({ ctx, color: '#000' })
   ctx.globalCompositeOperation = 'destination-in' // crop old content to new content (as if new content defines the shape)
   draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius - 1, color: '#000' })
-  // ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
-  // drawBackground({ ctx, color: '#000' })
+  ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
+  if (crop) {
+    draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius - 1, color: '#000' })
+  } else {
+    drawBackground({ ctx, color: '#000' })
+  }
 }
 
 function computeDensityMultiplier(lines: MircleLine[], radius: number, densityTarget: number) {
