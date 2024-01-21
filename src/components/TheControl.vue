@@ -97,6 +97,14 @@ const emit = defineEmits<{
           :step="1"
           :disabled="store.multiple === 'all'"
         />
+        <div class="ctrl" style="margin-left: 1rem;" title="Show labels for vertices">
+          <BaseCheckbox
+            id="labels"
+            v-model="store.labels"
+            style="margin: .5rem"
+          />
+          <label for="labels">Labels</label>
+        </div>
       </div>
 
       <div class="row" style="margin-top: 1rem;">
@@ -163,7 +171,7 @@ const emit = defineEmits<{
     </div>
 
     <!-- Render -->
-    <div style="margin-bottom: -.5rem; padding: 1rem; border-top: 1px solid #333;">
+    <div style="padding: 1rem; border-top: 1px solid #333;">
       <div class="row">
         <BaseButton
           :title="store.activity === 'render' ? 'Cancel ongoing render' : 'Render the image'"
@@ -181,7 +189,7 @@ const emit = defineEmits<{
           :large="true"
           class="ctrl"
           content="Download"
-          style="margin-right: 1rem;"
+          style="margin-right: 1rem; margin-left: .5rem;"
         />
         <div class="ctrl" title="Automatically render whenever options change">
           <BaseCheckbox
@@ -199,8 +207,6 @@ const emit = defineEmits<{
 
 <style scoped>
 .ctrl {
-  margin-right: .5rem;
-  margin-bottom: .5rem;
   user-select: none;
 }
 

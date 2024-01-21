@@ -9,6 +9,7 @@ export type StoreState = {
   autoRender: boolean,
   style: 'fancy' | 'plain',
   crop: boolean,
+  labels: boolean,
   activity: 'render' | 'download' | null,
   renderProgress: number,
 }
@@ -30,6 +31,7 @@ export const useStore = defineStore('store', {
     autoRender: true,
     style: 'fancy',
     crop: true,
+    labels: false,
     activity: null,
     renderProgress: 0,
   }),
@@ -40,7 +42,7 @@ export const useStore = defineStore('store', {
       const autoSize = (Math.min(window.innerWidth, window.innerHeight) - 20) * window.devicePixelRatio || 1
       const size = state.size === 'auto' ? autoSize : state.size
       const padding = state.padding === 'auto' ? size / 100 : state.padding
-      return { modulo, multiple, size, padding, style: state.style, crop: state.crop }
+      return { modulo, multiple, size, padding, style: state.style, crop: state.crop, labels: state.labels }
     },
   },
   actions: {},

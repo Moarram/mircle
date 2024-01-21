@@ -2,7 +2,7 @@ import { layoutGroupedMircle, layoutMircle, type GroupedMircleLine, type MircleL
 import { initCanvas, drawGradientCircle, drawLines, drawBackground, type StyledLine } from './draw'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { AbortError, delayFrames, group, primeFactors, statistics } from '@/utils'
-import { draw, math } from '@moarram/util'
+import { draw, math, type Position } from '@moarram/util'
 
 export type CreateMircleArgs = {
   canvas: HTMLCanvasElement,
@@ -82,6 +82,7 @@ export type MircleSpecification = {
   padding?: number,
   style?: 'fancy' | 'plain',
   crop?: boolean, // whether to crop image to circle
+  labels?: boolean, // whether to print labels around the circle
 }
 export type RenderMircleArgs = {
   canvas: HTMLCanvasElement | OffscreenCanvas, // destination canvas
@@ -89,12 +90,14 @@ export type RenderMircleArgs = {
   onProgress?: (progressPercent: number) => void,
 }
 // Render mircle on canvas
-export function renderMircle({ canvas, specification: { size, modulo, multiple, padding=0, style, crop }, onProgress }: RenderMircleArgs) {
+export function renderMircle({ canvas, specification: { size, modulo, multiple, padding=0, style, crop, labels=true }, onProgress }: RenderMircleArgs) {
   console.debug('Preparing canvas...')
   const ctx = initCanvas({ canvas, size, alpha: true })
 
   console.debug('Computing lines...')
-  const radius = (size - padding * 2) / 2
+  const labelSize = labels ? `${modulo}`.length : 0
+  const labelFontSize = 20
+  const radius = size / 2 - padding - labelSize * labelFontSize / 2
 
   let styledLines: StyledLine[] = []
   let accentLines: StyledLine[] = []
@@ -125,8 +128,8 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
 
   if (style === 'plain') {
     styledLines = styledLines.map(line => {
-      const alphaPart = line.color?.split('/').at(-1) || ' 1)'
-      return { ...line, color: `rgb(255 255 255 /${alphaPart}` }
+      const alpha = multiple === undefined ? line.color?.split('/').at(-1) || ' 1)' : Math.min(1000 / modulo, 0.7) + 1 / 255
+      return { ...line, color: `rgb(255 255 255 /${alpha}`, thickness: 1 }
     })
     accentLines = []
   }
@@ -134,7 +137,7 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   if (style === 'fancy') {
     console.debug('Drawing background...')
     // Note: Making this gradient took a lot of finagling... be warned
-    ctx.globalCompositeOperation = 'source-over'
+    ctx.globalCompositeOperation = 'source-over' // default
     drawGradientCircle({ ctx, radius, gradient: { 0: '#11F8', 1: '#F001' } })
     drawGradientCircle({ ctx, radius, gradient: { 0.5: '#0000', 1: '#F0F4' } })
     drawGradientCircle({ ctx, radius, gradient: { 0: '#FA1', 0.5: '#1850' } })
@@ -173,9 +176,25 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius - 1, color: '#000' })
   ctx.globalCompositeOperation = 'destination-over' // draw new content under old content (as if the new content was there first)
   if (crop) {
-    draw.circle({ ctx, pos: { x: 0, y: 0 }, r: radius - 1, color: '#000' })
+    draw.circle({ ctx, pos: { x: 0, y: 0 }, r: size / 2, color: '#000' })
   } else {
     drawBackground({ ctx, color: '#000' })
+  }
+
+  if (labels === true) {
+    console.debug('Drawing labels...')
+    ctx.globalCompositeOperation = 'source-over' // default
+    const labelMircle = layoutMircle({ modulo, multiple: 1, radius: radius + labelSize * labelFontSize / 2 })
+    let prevPos: Position | null = null
+    labelMircle.forEach(({ start, pos }) => {
+      if (prevPos && math.distance(pos, prevPos) < labelSize * labelFontSize) return // continue
+      if (prevPos && math.distance(pos, labelMircle[0].pos) < labelSize * labelFontSize / 2) return // continue
+      const label = `${start}`
+      const x = pos.x - labelFontSize * 0.3 * label.length
+      const y = pos.y - labelFontSize * 0.6
+      draw.text({ ctx, pos: { x, y }, msg: label, size: labelFontSize, font: '"Fira Code", monospace', color: '#FFF' })
+      prevPos = pos
+    })
   }
 }
 
