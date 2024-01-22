@@ -31,6 +31,7 @@ watch([specification, autoRender], () => {
 
 const progressText = computed(() => {
   if (store.activity !== 'render') return 'Done!'
+  if (store.renderProgress === 0) return 'Computing...'
   const mod = store.specification.modulo // alias
   const lines = store.specification.multiple ? mod : (mod * (mod - 1)) / 2
   return `Rendering ${lines} lines...`
