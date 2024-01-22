@@ -1,79 +1,7 @@
+import { draw, math } from '@moarram/util'
+import { group, primeFactors, statistics } from '../utils'
 import { layoutGroupedMircle, layoutMircle, type GroupedMircleLine, type MircleLine, type Line, layoutSparseGroupedMircle } from './layout'
 import { initCanvas, drawGradientCircle, drawLines, drawBackground, type StyledLine } from './draw'
-import type { WorkerRequest, WorkerResponse } from './worker'
-import { AbortError, delayFrames, group, primeFactors, statistics } from '@/utils'
-import { draw, math } from '@moarram/util'
-
-export type CreateMircleArgs = {
-  canvas: HTMLCanvasElement,
-  specification: MircleSpecification,
-  onProgress?: (progressPercent: number) => void,
-  signal?: AbortSignal,
-}
-// Render mircle image with a worker and transfer to canvas
-export async function createMircle({ canvas, specification, signal, onProgress }: CreateMircleArgs) {
-  let bitmap: ImageBitmap | undefined
-
-  try {
-    bitmap = await renderMircleWithWorker({ specification, signal, onProgress })
-
-    await delayFrames(2) // give ui a chance to update
-
-    console.debug('Drawing bitmap...')
-    canvas.width = bitmap.width
-    canvas.height = bitmap.height
-    const ctx = canvas.getContext('bitmaprenderer')
-    ctx?.transferFromImageBitmap(bitmap)
-
-    console.debug('Done!')
-
-  } finally {
-    bitmap?.close() // cleanup
-  }
-}
-
-export type RenderMircleWithWorkerArgs = {
-  specification: MircleSpecification,
-  signal?: AbortSignal,
-  onProgress?: (progressPercent: number) => void,
-}
-let worker: Worker | undefined // instance for re-use
-// Render mircle image with a worker
-export async function renderMircleWithWorker({ specification, signal, onProgress }: RenderMircleWithWorkerArgs): Promise<ImageBitmap> {
-  return new Promise((resolve, reject) => {
-    if (!worker) {
-      worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })
-    }
-    worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
-      const response = event.data
-      if ('progressPercent' in response) {
-        onProgress && onProgress(response.progressPercent)
-      }
-      if ('result' in response) {
-        resolve(response.result)
-      }
-    }
-    worker.onerror = (event: ErrorEvent) => {
-      console.debug('Error!')
-      worker?.terminate()
-      worker = undefined
-      reject(event)
-    }
-
-    if (signal) signal.onabort = (() => {
-      console.debug('Abort!')
-      worker?.terminate()
-      worker = undefined
-      reject(new AbortError())
-    })
-
-    const request: WorkerRequest = {
-      action: 'render',
-      specification,
-    }
-    worker.postMessage(request)
-  })
-}
 
 export type MircleSpecification = {
   size: number, // width and height canvas
@@ -84,13 +12,13 @@ export type MircleSpecification = {
   crop?: boolean, // whether to crop image to circle
   labels?: boolean, // whether to print labels around the circle
 }
-export type RenderMircleArgs = {
+export type DrawMircleArgs = {
   canvas: HTMLCanvasElement | OffscreenCanvas, // destination canvas
   specification: MircleSpecification,
   onProgress?: (progressPercent: number) => void,
 }
 // Render mircle on canvas
-export function renderMircle({ canvas, specification: { size, modulo, multiple, padding=0, style, crop, labels=true }, onProgress }: RenderMircleArgs) {
+export function drawMircle({ canvas, specification: { size, modulo, multiple, padding=0, style, crop, labels=true }, onProgress }:DrawMircleArgs) {
   console.debug('Preparing canvas...')
   const ctx = initCanvas({ canvas, size, alpha: true })
 

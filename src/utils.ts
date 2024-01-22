@@ -1,4 +1,4 @@
-import type { Position } from "@moarram/util";
+import type { Position } from './types'
 
 /** An ongoing activity has been cancelled */
 export class AbortError extends Error {}

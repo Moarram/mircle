@@ -1,5 +1,5 @@
-import { draw, type Position } from '@moarram/util'
-import type { Progress } from '../types'
+import { draw } from '@moarram/util'
+import type { Position, Progress } from '../types'
 
 export type InitCanvasArgs = {
   canvas: HTMLCanvasElement | OffscreenCanvas,

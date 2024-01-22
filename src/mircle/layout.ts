@@ -1,4 +1,5 @@
-import { math, type Position } from '@moarram/util'
+import { math } from '@moarram/util'
+import type { Position } from '../types'
 
 export type Line = {
   pos: Position, // start position

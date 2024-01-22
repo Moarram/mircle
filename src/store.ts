@@ -1,5 +1,6 @@
-import type { MircleSpecification } from './mircle/mircle'
 import { defineStore } from 'pinia'
+import type { MircleSpecification } from './mircle/drawMircle'
+
 
 export type StoreState = {
   modulo: number,

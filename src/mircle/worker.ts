@@ -1,4 +1,4 @@
-import { renderMircle, type MircleSpecification } from "./mircle"
+import { drawMircle, type MircleSpecification } from './drawMircle'
 
 export type WorkerRequest = WorkerRenderRequest
 type WorkerRenderRequest = {
@@ -18,7 +18,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
   const request = event.data
   if (request.action === 'render') {
     const canvas = new OffscreenCanvas(request.specification.size, request.specification.size)
-    renderMircle({
+    drawMircle({
       canvas,
       specification: request.specification,
       onProgress: progressPercent => self.postMessage({ progressPercent })

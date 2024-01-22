@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, toRaw } from 'vue';
 import { useStore } from '@/store';
-import { createMircle } from '@/mircle/mircle'
+import { createMircle } from '@/mircle/createMircle'
 import { AbortError, delayFrames, downloadCanvas } from '@/utils';
 
 defineExpose({
