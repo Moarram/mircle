@@ -2,7 +2,7 @@ import { layoutGroupedMircle, layoutMircle, type GroupedMircleLine, type MircleL
 import { initCanvas, drawGradientCircle, drawLines, drawBackground, type StyledLine } from './draw'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { AbortError, delayFrames, group, primeFactors, statistics } from '@/utils'
-import { draw, math, type Position } from '@moarram/util'
+import { draw, math } from '@moarram/util'
 
 export type CreateMircleArgs = {
   canvas: HTMLCanvasElement,
@@ -95,36 +95,24 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   const ctx = initCanvas({ canvas, size, alpha: true })
 
   console.debug('Computing lines...')
-  const labelSize = labels ? `${modulo}`.length : 0
+  const labelMaxChars = labels ? Math.max(`${modulo}`.length, 2) : 0
   const labelFontSize = 20
-  const radius = size / 2 - padding - labelSize * labelFontSize / 2
+  const labelSize = labelMaxChars * labelFontSize * 0.6
+  const radius = size / 2 - padding - labelSize
 
-  let styledLines: StyledLine[] = []
-  let accentLines: StyledLine[] = []
+  const mircleLines = multiple === undefined ? layoutGroupedMircle({ modulo, radius }) : layoutSparseGroupedMircle({ modulo, multiple, radius })
+  const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 10)
+  console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
 
-  if (multiple === undefined) { // all multiples
-    const mircleLines = layoutGroupedMircle({ modulo, radius })
-    const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 10)
-    styledLines = styleGroupedMircleLines(mircleLines, densityMultiplier)
-    accentLines = accentGroupedMircleLines(mircleLines, densityMultiplier)
-    console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
+  // TODO fix exaggerated lines (too many too thick)
+  let styledLines = styleGroupedMircleLines(mircleLines, densityMultiplier)
+  let accentLines = accentGroupedMircleLines(mircleLines, densityMultiplier)
 
-  } else { // specific multiple
-    const mircleLines = layoutSparseGroupedMircle({ modulo, multiple, radius })
-    const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 10)
-    styledLines = styleGroupedMircleLines(mircleLines, densityMultiplier)
-    accentLines = accentGroupedMircleLines(mircleLines, densityMultiplier)
-    console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
-
-    // TODO option to toggle methods?
-    // TODO fix exaggerated lines (too many too thick)
-
-    // const mircleLines = layoutMircle({ modulo, multiple, radius })
-    // const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 1)
-    // styledLines = styleMircleLines(mircleLines, densityMultiplier)
-    // accentLines = styledLines.map(line => ({ ...line, color: `rgb(255 25 25 / ${densityMultiplier * 0.5})` }))
-    // console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
-  }
+  const vertexVisits: number[] = Array(modulo).fill(0)
+  mircleLines.forEach(({ start, end, multiples }) => {
+    vertexVisits[start] += multiples.length ** 3
+    vertexVisits[end] += multiples.length ** 3
+  })
 
   if (style === 'plain') {
     styledLines = styledLines.map(line => {
@@ -184,16 +172,20 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   if (labels === true) {
     console.debug('Drawing labels...')
     ctx.globalCompositeOperation = 'source-over' // default
-    const labelMircle = layoutMircle({ modulo, multiple: 1, radius: radius + labelSize * labelFontSize / 2 })
-    let prevPos: Position | null = null
+    const labelMircle = layoutMircle({ modulo, multiple: 1, radius: radius + labelSize * 0.75 })
+    const spacing = labelMircle.length > 1 ? math.distance(labelMircle[0].pos, labelMircle[1].pos) : radius
+    const vertexStats = statistics(vertexVisits) // TODO get this info while computing accents
+    const isPrime = primeFactors(modulo).length === 1
+    const isPlainLayer = style === 'plain' && multiple !== undefined
     labelMircle.forEach(({ start, pos }) => {
-      if (prevPos && math.distance(pos, prevPos) < labelSize * labelFontSize) return // continue
-      if (prevPos && math.distance(pos, labelMircle[0].pos) < labelSize * labelFontSize / 2) return // continue
+      if (start !== 0 && (isPrime || isPlainLayer) && spacing < labelSize) return // labels all overlap, continue
+      const alpha = start === 0 ? 1 : isPrime || isPlainLayer ? 0.3 : math.clamp((vertexVisits[start] ** 1.3) / vertexStats.max, 0, 1)
+      if (!alpha || alpha < 0.1) return // label too faint, continue
       const label = `${start}`
       const x = pos.x - labelFontSize * 0.3 * label.length
       const y = pos.y - labelFontSize * 0.6
-      draw.text({ ctx, pos: { x, y }, msg: label, size: labelFontSize, font: '"Fira Code", monospace', color: '#FFF' })
-      prevPos = pos
+      const color = `rgb(255 255 255 / ${alpha})`
+      draw.text({ ctx, pos: { x, y }, msg: label, size: labelFontSize, font: '"Fira Code", monospace', color })
     })
   }
 }

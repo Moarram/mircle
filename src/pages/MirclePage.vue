@@ -81,6 +81,5 @@ const progressText = computed(() => {
   gap: var(--gap);
   align-content: flex-start;
   justify-content: space-evenly;
-  background: #000;
 }
 </style>

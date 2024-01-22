@@ -16,6 +16,11 @@ import MirclePage from '@/pages/MirclePage.vue'
 
 body {
   margin: 0;
+  padding: 0;
+  font-family: "Fira Code", Courier, monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #FFFC;
   background: #000;
 }
 
@@ -30,15 +35,5 @@ a {
   &:visited {
     color: #49F;
   }
-}
-
-#app {
-  font-family: "Fira Code", Courier, monospace;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #FFFC;
-  margin: 0;
-  padding: 0;
-  background: #000;
 }
 </style>

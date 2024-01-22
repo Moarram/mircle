@@ -30,7 +30,7 @@ export const useStore = defineStore('store', {
     padding: 'auto',
     autoRender: true,
     style: 'fancy',
-    crop: true,
+    crop: false,
     labels: false,
     activity: null,
     renderProgress: 0,
