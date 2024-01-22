@@ -95,16 +95,15 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
   const ctx = initCanvas({ canvas, size, alpha: true })
 
   console.debug('Computing lines...')
-  const labelMaxChars = labels ? Math.max(`${modulo}`.length, 2) : 0
-  const labelFontSize = 20
-  const labelSize = labelMaxChars * labelFontSize * 0.6
+  const labelMaxChars = labels ? `${modulo}`.length : 0
+  const labelFontSize = 24
+  const labelSize = Math.max(labelMaxChars, 2) * labelFontSize * 0.6
   const radius = size / 2 - padding - labelSize
 
   const mircleLines = multiple === undefined ? layoutGroupedMircle({ modulo, radius }) : layoutSparseGroupedMircle({ modulo, multiple, radius })
   const densityMultiplier = computeDensityMultiplier(mircleLines, radius, 10)
   console.debug(`lines: ${mircleLines.length}, density: ${densityMultiplier}`)
 
-  // TODO fix exaggerated lines (too many too thick)
   let styledLines = styleGroupedMircleLines(mircleLines, densityMultiplier)
   let accentLines = accentGroupedMircleLines(mircleLines, densityMultiplier)
 
@@ -174,7 +173,7 @@ export function renderMircle({ canvas, specification: { size, modulo, multiple, 
     ctx.globalCompositeOperation = 'source-over' // default
     const labelMircle = layoutMircle({ modulo, multiple: 1, radius: radius + labelSize * 0.75 })
     const spacing = labelMircle.length > 1 ? math.distance(labelMircle[0].pos, labelMircle[1].pos) : radius
-    const vertexStats = statistics(vertexVisits) // TODO get this info while computing accents
+    const vertexStats = statistics(vertexVisits) // TODO get this info while computing accents?
     const isPrime = primeFactors(modulo).length === 1
     const isPlainLayer = style === 'plain' && multiple !== undefined
     labelMircle.forEach(({ start, pos }) => {

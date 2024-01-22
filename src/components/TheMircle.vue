@@ -18,8 +18,6 @@ let canvas: HTMLCanvasElement
 
 const isError = ref<boolean>()
 
-// TODO track down bugs in Safari (gradient & line width incompatible, no bitmap over 3840px square)
-
 // Cancel an ongoing render
 function abort() {
   controller?.abort()
@@ -29,8 +27,10 @@ function abort() {
 async function download() {
   store.activity = 'download'
   await delayFrames(1) // give ui a chance to update
-  const mult = store.specification.multiple ? `at${store.specification.multiple}` : ''
-  const filename = `mircle${store.specification.modulo}${mult}.png`
+  const mod = store.specification.modulo
+  const mult = store.specification.multiple ? `-layer${store.specification.multiple}` : ''
+  const style = store.specification.style === 'plain' ? '-plain' : ''
+  const filename = `mircle${mod}${mult}${style}.png`
   await downloadCanvas(canvas, filename)
   store.activity = null
 }

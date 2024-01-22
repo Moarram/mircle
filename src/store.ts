@@ -14,14 +14,6 @@ export type StoreState = {
   renderProgress: number,
 }
 
-// TODO ui toggle for crop
-// TODO vertex labels
-// TODO consider modes if planning to animate:
-//  grouped mircle (all mults within mod, made to look cool)
-//  mircle (single mult, made to look cool and explain)
-//  animated mircle (changing mult, made for speed)
-//  about (some kind of explainer with labels, colors, animations, etc... could just be images in readme?)
-
 export const useStore = defineStore('store', {
   state: (): StoreState => ({
     modulo: 100,

@@ -77,7 +77,7 @@ const emit = defineEmits<{
     <!-- Options -->
     <div v-if="expanded" style="
       padding: 1rem;
-      background: #111;
+      background: #FFF1;
       border-top: 1px solid #333;
     ">
       <div class="row" title="Optionally show a single layer (instead of all)">

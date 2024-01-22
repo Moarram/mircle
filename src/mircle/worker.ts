@@ -4,7 +4,6 @@ export type WorkerRequest = WorkerRenderRequest
 type WorkerRenderRequest = {
   action: 'render',
   specification: MircleSpecification,
-  // styles: StyleMircleConfig,
 }
 
 export type WorkerResponse = WorkerProgressResponse | WorkerFinishedResponse
